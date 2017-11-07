@@ -2,6 +2,7 @@
 ## Contents
 1. [Introduction](#1-introduction)
 2. [List of sample applications](#2-list-of-sample-applications)
+3. [How to build a Trusted Application](#3-how-to-build-a-trusted-application)
 
 
 ## 1. Introduction
@@ -31,3 +32,11 @@ Core API. Non secure test application provides the key, initial vector and
 ciphered data.
 * Test application: `optee_example_aes`
 * Trusted application UUID: 5dbac793-f574-4871-8ad3-04331ec17f24
+
+## 3. How to build a Trusted Application
+[TA basics] documentation presents the basics for  implementing and building
+an OP-TEE trusted application.
+
+One can also refer to the examples provided: source files and make scripts.
+
+[TA basics]:	./docs/TA_basics.md
