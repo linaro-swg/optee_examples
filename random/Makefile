@@ -1,4 +1,4 @@
-export V?=0
+export V ?= 0
 
 # If _HOST or _TA specific compilers are not specified, then use CROSS_COMPILE
 HOST_CROSS_COMPILE ?= $(CROSS_COMPILE)
