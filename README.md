@@ -24,3 +24,10 @@ Directory **random/**:
 * Generates a random UUID using capabilities of TEE API (`TEE_GenerateRandom()`).
 * Test application: `optee_example_random`
 * Trusted application UUID: b6c53aba-9669-4668-a7f2-205629d00f86
+
+Directory **aes/**:
+* Runs an AES encryption and decryption from a TA using the GPD TEE Internal
+Core API. Non secure test application provides the key, initial vector and
+ciphered data.
+* Test application: `optee_example_aes`
+* Trusted application UUID: 5dbac793-f574-4871-8ad3-04331ec17f24

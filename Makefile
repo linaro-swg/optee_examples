@@ -4,6 +4,7 @@ OUTPUT_DIR := $(CURDIR)/out
 
 EXAMPLE_LIST := hello_world
 EXAMPLE_LIST += random
+EXAMPLE_LIST += aes
 
 .PHONY: all
 all: examples prepare-for-rootfs
