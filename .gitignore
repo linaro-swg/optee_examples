@@ -16,3 +16,4 @@ cscope.*
 out/
 hello_world/host/optee_example_hello_world
 random/host/optee_example_random
+aes/host/optee_example_aes
