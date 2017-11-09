@@ -33,7 +33,7 @@
 #include <tee_client_api.h>
 
 /* To the the UUID (found the the TA's h-file(s)) */
-#include <random_example_ta.h>
+#include <random_ta.h>
 
 int main(int argc, char *argv[])
 {
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	TEEC_Context ctx;
 	TEEC_Session sess;
 	TEEC_Operation op = { 0 };
-	TEEC_UUID uuid = TA_RANDOM_EXAMPLE_UUID;
+	TEEC_UUID uuid = TA_RANDOM_UUID;
 	uint8_t random_uuid[16] = { 0 };
 	uint32_t err_origin;
 
@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 	 * Prepare the argument. Pass a value in the first parameter,
 	 * the remaining three parameters are unused.
 	 */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_OUTPUT, TEEC_NONE,
-					 TEEC_NONE, TEEC_NONE);
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_OUTPUT,
+					 TEEC_NONE, TEEC_NONE, TEEC_NONE);
 	op.params[0].tmpref.buffer = random_uuid;
 	op.params[0].tmpref.size = sizeof(random_uuid);
 
@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
 	 * called.
 	 */
 	printf("Invoking TA to generate random UUID... \n");
-	res = TEEC_InvokeCommand(&sess, TA_EXAMPLE_RANDOM_GENERATE, &op,
-				 &err_origin);
+	res = TEEC_InvokeCommand(&sess, TA_RANDOM_CMD_GENERATE,
+				 &op, &err_origin);
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
 			res, err_origin);
