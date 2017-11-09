@@ -13,3 +13,4 @@ GTAGS
 *.swp
 *.ta
 cscope.*
+out/
