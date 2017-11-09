@@ -25,12 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define STR_TRACE_USER_TA "HELLO_WORLD"
-
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
-#include "hello_world_ta.h"
+#include <hello_world_ta.h>
 
 /*
  * Called when the instance of the TA is created. This is the first call in
