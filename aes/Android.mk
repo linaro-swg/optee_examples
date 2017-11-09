@@ -1,7 +1,6 @@
-###################### optee-random ######################
 LOCAL_PATH := $(call my-dir)
 
-OPTEE_CLIENT_EXPORT = $(LOCAL_PATH)/../../optee_client/out/export
+OPTEE_CLIENT_EXPORT ?= $(LOCAL_PATH)/../../optee_client/out/export
 
 include $(CLEAR_VARS)
 LOCAL_CFLAGS += -DANDROID_BUILD
@@ -13,7 +12,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/ta/include \
 		    $(OPTEE_CLIENT_EXPORT)/include
 
 LOCAL_SHARED_LIBRARIES := libteec
-LOCAL_MODULE := optee_example_random
+LOCAL_MODULE := optee_example_aes
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
 

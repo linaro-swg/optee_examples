@@ -12,7 +12,7 @@ CFLAGS += -Wall -I../ta/include -I./include
 CFLAGS += -I$(TEEC_EXPORT)/include
 LDADD += -lteec -L$(TEEC_EXPORT)/lib
 
-BINARY = optee_example_random
+BINARY = optee_example_aes
 
 .PHONY: all
 all: $(BINARY)
