@@ -25,12 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define STR_TRACE_USER_TA "RANDOM_EXAMPLE_TA"
-
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
-#include "random_example_ta.h"
+#include <random_ta.h>
 
 TEE_Result TA_CreateEntryPoint(void)
 {
@@ -66,9 +64,11 @@ void TA_CloseSessionEntryPoint(void __maybe_unused *sess_ctx)
 static TEE_Result random_number_generate(uint32_t param_types,
 	TEE_Param params[4])
 {
-	uint32_t exp_param_types = TEE_PARAM_TYPES
-					(TEE_PARAM_TYPE_MEMREF_OUTPUT, TEE_PARAM_TYPE_NONE,
-					 TEE_PARAM_TYPE_NONE, TEE_PARAM_TYPE_NONE);
+	uint32_t exp_param_types =
+				TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_OUTPUT,
+						TEE_PARAM_TYPE_NONE,
+						TEE_PARAM_TYPE_NONE,
+						TEE_PARAM_TYPE_NONE);
 
 	DMSG("has been called");
 	if (param_types != exp_param_types)
@@ -95,7 +95,7 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 	(void)&sess_ctx;
 
 	switch (cmd_id) {
-	case TA_EXAMPLE_RANDOM_GENERATE:
+	case TA_RANDOM_CMD_GENERATE:
 		return random_number_generate(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;

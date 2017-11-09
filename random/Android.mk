@@ -10,10 +10,10 @@ LOCAL_CFLAGS += -Wall
 LOCAL_SRC_FILES += host/main.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/ta/include \
-		$(OPTEE_CLIENT_EXPORT)/include \
+		    $(OPTEE_CLIENT_EXPORT)/include
 
 LOCAL_SHARED_LIBRARIES := libteec
-LOCAL_MODULE := tee_example_random
+LOCAL_MODULE := optee_example_random
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
 
