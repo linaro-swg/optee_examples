@@ -24,6 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <inttypes.h>
 
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
@@ -45,7 +46,7 @@
 struct aes_cipher {
 	uint32_t algo;			/* AES flavour */
 	uint32_t mode;			/* Encode or decode */
-	size_t key_size;		/* AES key size in byte */
+	uint32_t key_size;		/* AES key size in byte */
 	TEE_OperationHandle op_handle;	/* AES ciphering operation */
 	TEE_ObjectHandle key_handle;	/* transient object to load the key */
 };
@@ -232,7 +233,7 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
 	struct aes_cipher *sess;
 	TEE_Attribute attr;
 	TEE_Result res;
-	size_t key_sz;
+	uint32_t key_sz;
 	char *key;
 
 	/* Get ciphering context from session ID */
@@ -247,8 +248,8 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
 	key_sz = params[0].memref.size;
 
 	if (key_sz != sess->key_size) {
-		EMSG("Worng key size %d, expect %d bytes",
-				key_sz, sess->key_size);
+		EMSG("Wrong key size %" PRIu32 ", expect %" PRIu32 " bytes",
+		     key_sz, sess->key_size);
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
