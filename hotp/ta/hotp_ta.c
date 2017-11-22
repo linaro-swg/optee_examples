@@ -41,7 +41,7 @@ static uint8_t counter[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
  */
 static TEE_Result hmac_sha1(const uint8_t *key, const size_t keylen,
 			    const uint8_t *in, const size_t inlen,
-			    uint8_t *out, size_t *outlen)
+			    uint8_t *out, uint32_t *outlen)
 {
 	TEE_Attribute attr = { 0 };
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
@@ -154,7 +154,7 @@ static TEE_Result get_hotp(uint32_t param_types, TEE_Param params[4])
 	TEE_Result res = TEE_SUCCESS;
 	uint32_t hotp_val;
 	uint8_t mac[SHA1_HASH_SIZE];
-	size_t mac_len = sizeof(mac);
+	uint32_t mac_len = sizeof(mac);
 	int i;
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_OUTPUT,
