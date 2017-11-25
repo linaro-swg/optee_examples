@@ -2,10 +2,7 @@ export V ?= 0
 
 OUTPUT_DIR := $(CURDIR)/out
 
-EXAMPLE_LIST := hello_world
-EXAMPLE_LIST += random
-EXAMPLE_LIST += aes
-EXAMPLE_LIST += hotp
+EXAMPLE_LIST := $(subst /,,$(dir $(wildcard */Makefile)))
 
 .PHONY: all
 all: examples prepare-for-rootfs
