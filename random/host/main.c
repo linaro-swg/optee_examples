@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 	TEEC_UUID uuid = TA_RANDOM_UUID;
 	uint8_t random_uuid[16] = { 0 };
 	uint32_t err_origin;
+	int i;
 
 	/* Initialize a context connecting us to the TEE */
 	res = TEEC_InitializeContext(NULL, &ctx);
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 			res, err_origin);
 
 	printf("TA generated UUID value = 0x");
-	for (int i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		printf("%x", random_uuid[i]);
 	printf("\n");
 
