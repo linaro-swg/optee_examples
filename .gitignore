@@ -2,6 +2,7 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+*.a
 *.cmd
 *.d
 *.dmp
@@ -9,6 +10,7 @@ GTAGS
 *.lds
 *.map
 *.o
+*.so
 *.swp
 *.ta
 cscope.*
