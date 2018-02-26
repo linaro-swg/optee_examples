@@ -29,7 +29,7 @@ prepare-for-rootfs: examples
 		if [ -e $$example/host/optee_example_$$example ]; then \
 			cp -p $$example/host/optee_example_$$example $(OUTPUT_DIR)/ca/; \
 		fi; \
-		cp -pr $$example/ta/*.ta $(OUTPUT_DIR)/ta/; \
+		cp -pr $$example/*/*.ta $(OUTPUT_DIR)/ta/; \
 	done
 
 prepare-for-rootfs-clean:
