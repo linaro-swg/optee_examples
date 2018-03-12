@@ -30,7 +30,7 @@
 /* Extra properties (give a version id and a string name) */
 #define TA_CURRENT_TA_EXT_PROPERTIES \
     { "gp.ta.description", USER_TA_PROP_TYPE_STRING, \
-        "Example of OP-TEE Hello World Trusted Application" }, \
+        "Trusted Application using multiple user-defined libraries" }, \
     { "gp.ta.version", USER_TA_PROP_TYPE_U32, &(const uint32_t){ 0x0010 } }
 
 #endif /* USER_TA_HEADER_DEFINES_H */
