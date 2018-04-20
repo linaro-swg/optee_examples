@@ -15,17 +15,25 @@ TEE_Result TA_CreateEntryPoint(void)
 
 	/* This function is in the static library libtalib1.a */
 	talib1_func();
+
 	/*
 	 * This one is in the shared library libtalib2.so (the run-time
 	 * binary loaded by OP-TEE is 7814a949-e967-421c-8838-04f7ee1c5744.ta)
 	 */
 	talib2_func();
+
 	/*
-	 * And this one is in libtalib3.so (a.k.a.
+	 * This function is in libtalib3.so (a.k.a.
 	 * 14c7f8d4-0202-4bfe-b4ca-ab6eca303169.ta). ta_lib3func() is also
 	 * called from within libtalib2.
 	 */
 	talib3_func();
+
+	/*
+	 * Trigger a TA panic from a shared library (will exercise the stack
+	 * unwinding code)
+	 */
+	talib2_panic();
 
 	return TEE_SUCCESS;
 }

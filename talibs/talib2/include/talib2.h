@@ -6,5 +6,6 @@
 #define TALIB2_H
 
 void talib2_func(void);
+void talib2_panic(void);
 
 #endif /*TALIB2_H*/
