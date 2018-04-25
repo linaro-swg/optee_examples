@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
 	res = TEEC_OpenSession(&ctx, &sess, &uuid,
 			       TEEC_LOGIN_PUBLIC, NULL, NULL, &err_origin);
 	if (res != TEEC_ERROR_TARGET_DEAD)
-		errx(1, "TEEC_Opensession failed unexpectedly with code 0x%x "
-			"origin 0x%x", res, err_origin);
+		errx(1, "TEEC_Opensession unexpectedly returned with code 0x%x"
+			" origin 0x%x", res, err_origin);
 
 	TEEC_FinalizeContext(&ctx);
 
