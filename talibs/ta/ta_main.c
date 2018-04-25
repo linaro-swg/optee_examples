@@ -6,20 +6,8 @@
 #include <stdio.h>
 #include <talib1.h>
 #include <talib2.h>
-//#include <talib3.h>
+#include <talib3.h>
 #include <tee_internal_api.h>
-
-void bar(void);
-void bar(void)
-{
-	TEE_Panic(1);
-}
-
-void foo(void);
-void foo(void)
-{
-	bar();
-}
 
 TEE_Result TA_CreateEntryPoint(void)
 {
@@ -34,13 +22,12 @@ TEE_Result TA_CreateEntryPoint(void)
 	 */
 	talib2_func();
 
-foo();
 	/*
 	 * This function is in libtalib3.so (a.k.a.
 	 * 14c7f8d4-0202-4bfe-b4ca-ab6eca303169.ta). ta_lib3func() is also
 	 * called from within libtalib2.
 	 */
-//	talib3_func();
+	talib3_func();
 
 	/*
 	 * Trigger a TA panic from a shared library (will exercise the stack
