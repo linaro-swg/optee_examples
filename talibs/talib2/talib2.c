@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include <tee_internal_api.h>
 #include "talib2.h"
-#include "talib3.h"
+//#include "talib3.h"
 
 void talib2_func(void)
 {
 	printf("talib2_func()\n");
-	talib3_func();
+//	talib3_func();
 }
 
 void talib2_panic(void)

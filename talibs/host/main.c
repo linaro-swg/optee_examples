@@ -25,19 +25,13 @@ int main(int argc, char *argv[])
 	 * functions implemented in libraries (libtalib1.a, libtalib2.so,
 	 * libtalib3.so). Watch the secure console for debug messages from the
 	 * libraries.
+	 * We expect a failure because the TA should call TEE_Panic().
 	 */
 	res = TEEC_OpenSession(&ctx, &sess, &uuid,
 			       TEEC_LOGIN_PUBLIC, NULL, NULL, &err_origin);
-	if (res != TEEC_SUCCESS)
-		errx(1, "TEEC_Opensession failed with code 0x%x origin 0x%x",
-			res, err_origin);
-
-	/*
-	 * We're done with the TA, close the session and
-	 * destroy the context.
-	 */
-
-	TEEC_CloseSession(&sess);
+	if (res != TEEC_ERROR_TARGET_DEAD)
+		errx(1, "TEEC_Opensession failed unexpectedly with code 0x%x "
+			"origin 0x%x", res, err_origin);
 
 	TEEC_FinalizeContext(&ctx);
 
