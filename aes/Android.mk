@@ -13,6 +13,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/ta/include \
 
 LOCAL_SHARED_LIBRARIES := libteec
 LOCAL_MODULE := optee_example_aes
+LOCAL_VENDOR_MODULE := true
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
 
