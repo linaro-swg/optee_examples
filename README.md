@@ -33,6 +33,12 @@ ciphered data.
 * Test application: `optee_example_aes`
 * Trusted application UUID: 5dbac793-f574-4871-8ad3-04331ec17f24
 
+Directory **secure_storage/**:
+* A Trusted Application to read/write raw data into the
+OP-TEE secure storage using the GPD TEE Internal Core API.
+* Test application: `optee_example_secure_storage`
+* Trusted application UUID: f4e750bb-1437-4fbf-8785-8d3580c34994
+
 ## 3. How to build a Trusted Application
 [TA basics] documentation presents the basics for  implementing and building
 an OP-TEE trusted application.
