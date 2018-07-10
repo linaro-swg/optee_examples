@@ -35,7 +35,7 @@
 /* To the the UUID (found the the TA's h-file(s)) */
 #include <hello_world_ta.h>
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	TEEC_Result res;
 	TEEC_Context ctx;
