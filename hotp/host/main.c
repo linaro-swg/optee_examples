@@ -36,7 +36,7 @@ struct test_value rfc4226_test_values[] = {
 	{ 9, 520489 }
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	TEEC_Context ctx;
 	TEEC_Operation op = { 0 };

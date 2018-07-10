@@ -157,7 +157,7 @@ void cipher_buffer(struct test_ctx *ctx, char *in, char *out, size_t sz)
 			res, origin);
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct test_ctx ctx;
 	char key[AES_TEST_KEY_SIZE];
