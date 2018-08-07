@@ -47,8 +47,12 @@ static TEE_Result delete_object(uint32_t param_types, TEE_Param params[4])
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	obj_id = (char *)params[0].memref.buffer;
 	obj_id_sz = params[0].memref.size;
+	obj_id = TEE_Malloc(obj_id_sz, 0);
+	if (!obj_id)
+		return TEE_ERROR_OUT_OF_MEMORY;
+
+	TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
 
 	/*
 	 * Check object exists and delete it
@@ -60,10 +64,12 @@ static TEE_Result delete_object(uint32_t param_types, TEE_Param params[4])
 					&object);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to open persistent object, res=0x%08x", res);
+		TEE_Free(obj_id);
 		return res;
 	}
 
 	TEE_CloseAndDeletePersistentObject1(object);
+	TEE_Free(obj_id);
 
 	return res;
 }
@@ -89,8 +95,12 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	obj_id = (char *)params[0].memref.buffer;
 	obj_id_sz = params[0].memref.size;
+	obj_id = TEE_Malloc(obj_id_sz, 0);
+	if (!obj_id)
+		return TEE_ERROR_OUT_OF_MEMORY;
+
+	TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
 
 	data = (char *)params[1].memref.buffer;
 	data_sz = params[1].memref.size;
@@ -111,6 +121,7 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 					&object);
 	if (res != TEE_SUCCESS) {
 		EMSG("TEE_CreatePersistentObject failed 0x%08x", res);
+		TEE_Free(obj_id);
 		return res;
 	}
 
@@ -121,6 +132,7 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 	} else {
 		TEE_CloseObject(object);
 	}
+	TEE_Free(obj_id);
 	return res;
 }
 
@@ -146,8 +158,12 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	obj_id = (char *)params[0].memref.buffer;
 	obj_id_sz = params[0].memref.size;
+	obj_id = TEE_Malloc(obj_id_sz, 0);
+	if (!obj_id)
+		return TEE_ERROR_OUT_OF_MEMORY;
+
+	TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
 
 	data = (char *)params[1].memref.buffer;
 	data_sz = params[1].memref.size;
@@ -163,6 +179,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 					&object);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to open persistent object, res=0x%08x", res);
+		TEE_Free(obj_id);
 		return res;
 	}
 
@@ -194,6 +211,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 	params[1].memref.size = read_bytes;
 exit:
 	TEE_CloseObject(object);
+	TEE_Free(obj_id);
 	return res;
 }
 
