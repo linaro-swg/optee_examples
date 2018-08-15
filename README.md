@@ -39,6 +39,12 @@ OP-TEE secure storage using the GPD TEE Internal Core API.
 * Test application: `optee_example_secure_storage`
 * Trusted application UUID: f4e750bb-1437-4fbf-8785-8d3580c34994
 
+Directory **acipher/**:
+* Generates an RSA key pair of specified size and encrypts a supplied string
+ with it using the GPD TEE Internal Core API.
+* Test application: `optee_example_acipher`
+* Trusted application UUID: a734eed9-d6a1-4244-aa50-7c99719e7b7b
+
 ## 3. How to build a Trusted Application
 [TA basics] documentation presents the basics for  implementing and building
 an OP-TEE trusted application.
