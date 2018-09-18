@@ -49,7 +49,7 @@ hello_world/
     ├── sub.mk                    srcs-y += hello_world_ta.c
     ├── include
     │   └── hello_world_ta.h      Header exported to non-secure: TA commands API
-    ├── hello_world_ta.c          Implementaion of TA entry points
+    ├── hello_world_ta.c          Implementation of TA entry points
     └── user_ta_header_defines.h  TA_UUID, TA_FLAGS, TA_DATA/STACK_SIZE, ...
 ```
 
@@ -96,7 +96,7 @@ delivery. For examples:
   Base directory for build objects filetree. If not set, devit defaults to
   **./out** from the TA source tree base directory.
 
-A tipical makefile to drive the build of a TA is:
+A typical makefile to drive the build of a TA is:
 ```make
 # Append specific configuration to the C source build (here log=info)
 # The UUID for the Trusted Application
@@ -122,7 +122,7 @@ Following are examples of directive one can implement in a sub.mk make script:
   Includes path **./include/** from the current directory to the include path.
 
 * `cflags-hello_world_ta.c-y += -Wno-strict-prototypes`\
-  Adds directive `-Wno-strict-prototypes` to the build directove of
+  Adds directive `-Wno-strict-prototypes` to the build directive of
   **./hello_world_ta.c** specific source file.
 
 * `cflags-remove-hello_world_ta.c-y += -Wno-strict-prototypes`\
@@ -158,14 +158,14 @@ $ cat hello_world/ta/Android.mk
 LOCAL_PATH := $(call my-dir)
 # Define the module name as the signed TA binary filename.
 local_module := 8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta
-# Include the devikt Android mak script
+# Include the devkit Android make script
 include $(OPTEE_OS_DIR)/mk/aosp_optee.mk
 ```
 
 ---
 # 4. TA Entry Points Implementation Basics
 
-TA source code is expected to provide implemenation for the following
+TA source code is expected to provide implementation for the following
 functions:
 
 ```c
