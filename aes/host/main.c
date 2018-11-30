@@ -180,7 +180,7 @@ int main(void)
 	memset(iv, 0, sizeof(iv)); /* Load some dummy value */
 	set_iv(&ctx, iv, AES_TEST_KEY_SIZE);
 
-	printf("Encore buffer from TA\n");
+	printf("Encode buffer from TA\n");
 	memset(clear, 0x5a, sizeof(clear)); /* Load some dummy value */
 	cipher_buffer(&ctx, clear, ciph, AES_TEST_BUFFER_SIZE);
 
