@@ -196,7 +196,6 @@ int main(void)
 	set_iv(&ctx, iv, AES_TEST_KEY_SIZE);
 
 	printf("Decode buffer from TA\n");
-	memset(clear, 0x5a, sizeof(clear)); /* Load some dummy value */
 	cipher_buffer(&ctx, ciph, temp, AES_TEST_BUFFER_SIZE);
 
 	/* Check decoded is the clear content */
