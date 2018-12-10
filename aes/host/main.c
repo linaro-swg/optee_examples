@@ -37,6 +37,7 @@
 
 #define AES_TEST_BUFFER_SIZE	4096
 #define AES_TEST_KEY_SIZE	16
+#define AES_BLOCK_SIZE		16
 
 #define DECODE			0
 #define ENCODE			1
@@ -161,7 +162,7 @@ int main(void)
 {
 	struct test_ctx ctx;
 	char key[AES_TEST_KEY_SIZE];
-	char iv[AES_TEST_KEY_SIZE];
+	char iv[AES_BLOCK_SIZE];
 	char clear[AES_TEST_BUFFER_SIZE];
 	char ciph[AES_TEST_BUFFER_SIZE];
 	char temp[AES_TEST_BUFFER_SIZE];
@@ -178,7 +179,7 @@ int main(void)
 
 	printf("Reset ciphering operation in TA (provides the initial vector)\n");
 	memset(iv, 0, sizeof(iv)); /* Load some dummy value */
-	set_iv(&ctx, iv, AES_TEST_KEY_SIZE);
+	set_iv(&ctx, iv, AES_BLOCK_SIZE);
 
 	printf("Encode buffer from TA\n");
 	memset(clear, 0x5a, sizeof(clear)); /* Load some dummy value */
@@ -193,7 +194,7 @@ int main(void)
 
 	printf("Reset ciphering operation in TA (provides the initial vector)\n");
 	memset(iv, 0, sizeof(iv)); /* Load some dummy value */
-	set_iv(&ctx, iv, AES_TEST_KEY_SIZE);
+	set_iv(&ctx, iv, AES_BLOCK_SIZE);
 
 	printf("Decode buffer from TA\n");
 	cipher_buffer(&ctx, ciph, temp, AES_TEST_BUFFER_SIZE);
