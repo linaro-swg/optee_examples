@@ -146,7 +146,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 	TEE_ObjectHandle object;
 	TEE_ObjectInfo object_info;
 	TEE_Result res;
-	size_t read_bytes;
+	uint32_t read_bytes;
 	char *obj_id;
 	size_t obj_id_sz;
 	char *data;
@@ -202,7 +202,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 	res = TEE_ReadObjectData(object, data, object_info.dataSize,
 				 &read_bytes);
 	if (res != TEE_SUCCESS || read_bytes != object_info.dataSize) {
-		EMSG("TEE_ReadObjectData failed 0x%08x, read %u over %u",
+		EMSG("TEE_ReadObjectData failed 0x%08x, read %" PRIu32 " over %u",
 				res, read_bytes, object_info.dataSize);
 		goto exit;
 	}
