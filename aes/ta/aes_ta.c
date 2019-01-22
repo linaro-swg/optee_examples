@@ -260,13 +260,13 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
 	 * - reset transient object and load attribute data
 	 *   TEE_ResetTransientObject()
 	 *   TEE_PopulateTransientObject()
-	 * - load the key (transient object) into the cihering operation
+	 * - load the key (transient object) into the ciphering operation
 	 *   TEE_SetOperationKey()
 	 *
 	 * TEE_SetOperationKey() requires operation to be in "initial state".
 	 * We can use TEE_ResetOperation() to reset the operation but this
-	 * api cannot be used on operation with key(s) not yet set. Hence,
-	 * when allocating the operation handle, we prevovision a dummy key.
+	 * API cannot be used on operation with key(s) not yet set. Hence,
+	 * when allocating the operation handle, we load a dummy key.
 	 * Thus, set_key sequence always reset then set key on operation.
 	 */
 

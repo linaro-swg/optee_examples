@@ -63,7 +63,7 @@
 
 /*
  * TA_AES_CMD_SET_IV - reset IV
- * param[0] (memref) initial vector, size shall equal key length
+ * param[0] (memref) initial vector, size shall equal block length
  * param[1] unused
  * param[2] unused
  * param[3] unused
@@ -71,7 +71,7 @@
 #define TA_AES_CMD_SET_IV		2
 
 /*
- * TA_AES_CMD_CIPHER - Ciphere inut buffer into output buffer
+ * TA_AES_CMD_CIPHER - Cipher input buffer into output buffer
  * param[0] (memref) input buffer
  * param[1] (memref) output buffer (shall be bigger than input buffer)
  * param[2] unused
