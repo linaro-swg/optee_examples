@@ -1,4 +1,4 @@
-project (aes C)
+project (optee_example_aes C)
 
 set (SRC host/main.c)
 
