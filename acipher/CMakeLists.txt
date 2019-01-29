@@ -1,4 +1,4 @@
-project (acipher C)
+project (optee_example_acipher C)
 
 set (SRC host/main.c)
 

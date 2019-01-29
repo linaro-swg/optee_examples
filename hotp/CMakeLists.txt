@@ -1,4 +1,4 @@
-project (hotp C)
+project (optee_example_hotp C)
 
 set (SRC host/main.c)
 
