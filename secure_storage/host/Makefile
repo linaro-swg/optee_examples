@@ -23,3 +23,6 @@ $(BINARY): $(OBJS)
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(BINARY)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
