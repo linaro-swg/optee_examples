@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
 	op.params[1].tmpref.buffer = malloc(op.params[1].tmpref.size);
 	if (!op.params[1].tmpref.buffer)
-		err(1, "Cannot allocate out buffer of size %" PRId32,
+		err(1, "Cannot allocate out buffer of size %zu",
 		    op.params[1].tmpref.size);
 
 	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
