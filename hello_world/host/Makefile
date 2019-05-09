@@ -6,11 +6,11 @@ OBJCOPY ?= $(CROSS_COMPILE)objcopy
 OBJDUMP ?= $(CROSS_COMPILE)objdump
 READELF ?= $(CROSS_COMPILE)readelf
 
-OBJS = main.o
+OBJS = main.o lib0e3ade56-96dc-44cf-9b52-2e6a06d84380.so
 
 CFLAGS += -Wall -I../ta/include -I$(TEEC_EXPORT)/include -I./include
 #Add/link other required libraries here
-LDADD += -lteec -L$(TEEC_EXPORT)/lib
+LDADD += -lteec -L$(TEEC_EXPORT)/lib -lpthread
 
 BINARY = optee_example_hello_world
 
@@ -26,3 +26,7 @@ clean:
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+%.so: ree_service.c
+	$(CC) -fPIC $(CFLAGS) -c $<
+	$(CC) -shared -fPIC -o $@ $^ $(LDADD) $(CFLAGS)

@@ -28,6 +28,7 @@ prepare-for-rootfs: examples
 	@for example in $(EXAMPLE_LIST); do \
 		if [ -e $$example/host/optee_example_$$example ]; then \
 			cp -p $$example/host/optee_example_$$example $(OUTPUT_DIR)/ca/; \
+			cp -p $$example/host/*.so $(OUTPUT_DIR)/ca/ > /dev/null; \
 		fi; \
 		cp -pr $$example/ta/*.ta $(OUTPUT_DIR)/ta/; \
 	done

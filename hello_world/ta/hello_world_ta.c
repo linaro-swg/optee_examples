@@ -29,6 +29,7 @@
 #include <tee_internal_api_extensions.h>
 
 #include <hello_world_ta.h>
+#include <string.h>
 
 /*
  * Called when the instance of the TA is created. This is the first call in
@@ -97,6 +98,12 @@ void TA_CloseSessionEntryPoint(void __maybe_unused *sess_ctx)
 static TEE_Result inc_value(uint32_t param_types,
 	TEE_Param params[4])
 {
+	TEE_UUID ree_uuid = TA_HELLO_WORLD_REE_UUID;
+	TEE_Result result = TEE_SUCCESS;
+	TEE_REESessionHandle ree_sess = NULL;
+	uint32_t ret_origin = 0, paramTypes;
+	char msg[] = "Hello! from TEE";
+	TEE_Param ree_params[4];
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
@@ -107,10 +114,45 @@ static TEE_Result inc_value(uint32_t param_types,
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	IMSG("Got value: %u from NW", params[0].value.a);
+	EMSG("Got value: %u from NW", params[0].value.a);
 	params[0].value.a++;
 	IMSG("Increase value to: %u", params[0].value.a);
 
+	EMSG("Opening a session on REE service\n");
+
+	result = TEE_OpenREESession(&ree_uuid, 0, 0, NULL,
+					&ree_sess, &ret_origin);
+	if (result != TEE_SUCCESS) {
+		DMSG("Failed to open up REE Session\n");
+		goto err;
+	}
+
+	/* Send a custom command */
+	paramTypes = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT, /* Reserved */
+			TEE_PARAM_TYPE_MEMREF_INPUT,
+			TEE_PARAM_TYPE_MEMREF_OUTPUT,
+			TEE_PARAM_TYPE_NONE);
+	ree_params[1].memref.buffer = msg;
+	ree_params[1].memref.size = strlen(msg) + 1;
+	ree_params[2].memref.buffer = TEE_Malloc(64, TEE_MALLOC_FILL_ZERO);
+	ree_params[2].memref.size = 64;
+
+	if (!ree_params[2].memref.buffer)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	EMSG("------ Invoking command---\n");
+	result = TEE_InvokeREECommand(ree_sess, 0, HELLO_WORLD_MSG,
+					paramTypes, ree_params, &ret_origin);
+	if (result != TEE_SUCCESS) {
+		DMSG("Failed to invoke REE command\n");
+		goto err;
+	}
+	EMSG("TEE:: Received: %s\n", (char *)ree_params[2].memref.buffer);
+	TEE_Free(ree_params[2].memref.buffer);
+
+	TEE_CloseREESession(ree_sess);
+
+err:
 	return TEE_SUCCESS;
 }
 
