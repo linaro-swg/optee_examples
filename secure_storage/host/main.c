@@ -166,7 +166,7 @@ TEEC_Result delete_secure_object(struct test_ctx *ctx, char *id)
 
 #define TEST_OBJECT_SIZE	7000
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct test_ctx ctx;
 	char obj1_id[] = "object#1";		/* string identification for the object */
