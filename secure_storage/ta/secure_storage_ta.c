@@ -25,6 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <inttypes.h>
 #include <secure_storage_ta.h>
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
