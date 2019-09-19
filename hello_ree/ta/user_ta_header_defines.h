@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2016-2017, Linaro Limited
  * All rights reserved.
+ * 
+ * Copyright (C) 2019 Intel Corporation All Rights Reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,20 +26,48 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef TA_HELLO_WORLD_H
-#define TA_HELLO_WORLD_H
-
 
 /*
- * This UUID is generated with uuidgen
- * the ITU-T UUID generator at http://www.itu.int/ITU-T/asn1/uuid.html
+ * The name of this file must not be modified
  */
-#define TA_HELLO_WORLD_UUID \
-	{ 0x8aaaf200, 0x2450, 0x11e4, \
-		{ 0xab, 0xe2, 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b} }
 
-/* The function IDs implemented in this TA */
-#define TA_HELLO_WORLD_CMD_INC_VALUE		0
-#define TA_HELLO_WORLD_CMD_DEC_VALUE		1
+#ifndef USER_TA_HEADER_DEFINES_H
+#define USER_TA_HEADER_DEFINES_H
 
-#endif /*TA_HELLO_WORLD_H*/
+/* To get the TA UUID definition */
+#include <hello_ree_ta.h>
+
+#define TA_UUID				TA_HELLO_REE_UUID
+
+/*
+ * TA properties: multi-instance TA, no specific attribute
+ * TA_FLAG_EXEC_DDR is meaningless but mandated.
+ */
+#define TA_FLAGS			TA_FLAG_EXEC_DDR
+
+/* Provisioned stack size */
+#define TA_STACK_SIZE			(2 * 1024)
+
+/* Provisioned heap size for TEE_Malloc() and friends */
+#define TA_DATA_SIZE			(32 * 1024)
+
+/* The gpd.ta.version property */
+#define TA_VERSION	"1.0"
+
+/* The gpd.ta.description property */
+#define TA_DESCRIPTION	"Example of OP-TEE Hello REE Trusted Application"
+
+/*
+ * Extra properties
+ * CA (REE)  -> UTA (TEE): cmd TA_HELLO_REE_FILL_RANDOM_NUMBER
+ * UTA (TEE) -> CA (REE) : cmd HELLO_REE_EXCHANGE_GREETINGS
+ * MSGQ(REE) -> UTA (TEE): response of HELLO_REE_EXCHANGE_GREETINGS
+ * UTA (TEE) -> CA (REE) : response of TA_HELLO_REE_FILL_RANDOM_NUMBER
+ */
+
+#define TA_CURRENT_TA_EXT_PROPERTIES \
+    { "com.intel.hello_ree.callflow", \
+	USER_TA_PROP_TYPE_STRING, \
+        "REE->TEE->REE->TEE->REE" }
+
+#endif /* USER_TA_HEADER_DEFINES_H */

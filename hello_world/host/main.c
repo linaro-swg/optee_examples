@@ -28,9 +28,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <pthread.h>
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
@@ -38,82 +35,14 @@
 /* To the the UUID (found the the TA's h-file(s)) */
 #include <hello_world_ta.h>
 
-#include <ree_service_api.h>
-
-void *ree_hello_service(void *arg)
+int main(void)
 {
-	int ret;
-	void *service = arg;
-	size_t num_params;
-	struct tee_params params[4] = {0};
-
-	/* Process the message */
-	do {
-		/* Wait for the message */
-		ret = ree_rcv_params(service, &num_params, params);
-		if (ret) {
-			printf("Failed to receive msg\n");
-			goto err;
-		}
-
-		switch(params[0].u.value.a) {
-		case HELLO_WORLD_MSG:
-		{
-			char *msg = "Hello! from REE";
-			memcpy(params[2].u.memref.buffer, msg, strlen(msg) + 1);
-			printf("Received: %s\n", (char *)params[1].u.memref.buffer);
-			break;
-		}
-
-		case OPTEE_MRC_GENERIC_SERVICE_START:
-			printf("Nothing specific to start\n");
-			break;
-
-		case OPTEE_MRC_GENERIC_SERVICE_STOP:
-			printf("Nothing specific to stop\n");
-			break;
-
-		default:
-			printf("Unknown command received: %lu\n", params[0].u.value.a);
-			break;
-		}
-
-		/* Send the response */
-		ret = ree_snd_params(service, num_params, params, 0);
-		if (ret) {
-			printf("Failed to send status \n");
-			goto err;
-		}
-
-	} while (1);
-
-err:
-	return NULL;
-}
-
-int main(int argc, char *argv[])
-{
-	int ret;
 	TEEC_Result res;
 	TEEC_Context ctx;
 	TEEC_Session sess;
 	TEEC_Operation op;
-	pthread_t ree_serv_thread;
 	TEEC_UUID uuid = TA_HELLO_WORLD_UUID;
 	uint32_t err_origin;
-	void *service;
-	REEC_UUID ree_uuid = TA_HELLO_WORLD_REE_UUID;
-
-#if 0
-	ret = ree_service_init(&ree_uuid, &service);
-	if (ret)
-		errx(1, "Failed to register custom ree service\n");
-
-	/* Create a hello world ree service */
-	ret = pthread_create(&ree_serv_thread, NULL, ree_hello_service, service);
-	if (ret)
-		errx(1, "Failed to start hello world ree service\n");
-#endif
 
 	/* Initialize a context connecting us to the TEE */
 	res = TEEC_InitializeContext(NULL, &ctx);
@@ -172,11 +101,6 @@ int main(int argc, char *argv[])
 	TEEC_CloseSession(&sess);
 
 	TEEC_FinalizeContext(&ctx);
-#if 0
-	ree_service_exit(service);
-#endif
-
-	pthread_join(ree_serv_thread, NULL);
 
 	return 0;
 }

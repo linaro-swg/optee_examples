@@ -2,6 +2,8 @@
  * Copyright (c) 2016, Linaro Limited
  * All rights reserved.
  *
+ * Copyright (C) 2019 Intel Corporation All Rights Reserved
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -25,10 +27,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* 
+ * This UTA calls out for the REE service to satisfy a request. The requests
+ * are pre-negotiated with Client Application (CA) - same as between CA and
+ * UTA for getting the Trusted services.
+ *
+ * The UTA has no knowledge if the service is implemented as Message Queue or
+ * as a Dynamic Library. It will used the UUID to uniquely identify the service
+ * and send the requests to it.
+ */
+
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
+#include <tee_api_types_extensions.h>
+#include <tee_api_extensions.h>
 
-#include <hello_world_ta.h>
+#include <hello_ree_ta.h>
+#include <string.h>
 
 /*
  * Called when the instance of the TA is created. This is the first call in
@@ -61,9 +76,9 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 		void __maybe_unused **sess_ctx)
 {
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE);
+			TEE_PARAM_TYPE_NONE,
+			TEE_PARAM_TYPE_NONE,
+			TEE_PARAM_TYPE_NONE);
 
 	DMSG("has been called");
 
@@ -78,7 +93,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 * The DMSG() macro is non-standard, TEE Internal API doesn't
 	 * specify any means to logging from a TA.
 	 */
-	IMSG("Hello World!\n");
+	IMSG("Hello World! I can invoke services from REE!\n");
 
 	/* If return value != TEE_SUCCESS the session will not be created. */
 	return TEE_SUCCESS;
@@ -94,61 +109,112 @@ void TA_CloseSessionEntryPoint(void __maybe_unused *sess_ctx)
 	IMSG("Goodbye!\n");
 }
 
-static TEE_Result inc_value(uint32_t param_types,
-	TEE_Param params[4])
+/**
+ * invoke_ree_service() - call the REE service
+ */
+static TEE_Result invoke_ree_service(TEE_UUID *uuid)
 {
-	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE);
+	char msg_to_ree[] = "Hello! from TEE";
+	ree_session_handle ree_sess = NULL;
+	TEE_Result result = TEE_SUCCESS;
+	TEE_Param ree_params[4] = {0};
+	uint32_t param_types;
+	uint32_t ret_origin = 0;
+
+	DMSG("Opening a session on REE service\n");
+
+	/* Open a session on REE service identified by UUID */
+	result = TEE_OpenREESession(uuid, 0, 0, NULL, &ree_sess, &ret_origin);
+	if (result != TEE_SUCCESS) {
+		EMSG("Failed to open up REE Session\n");
+		goto err;
+	}
+
+	/* Send a custom command */
+	param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT, /* Reserved */
+			TEE_PARAM_TYPE_MEMREF_INPUT,
+			TEE_PARAM_TYPE_MEMREF_OUTPUT,
+			TEE_PARAM_TYPE_NONE);
+	/* Outgoing data to REE service */
+	ree_params[1].memref.buffer = msg_to_ree;
+	ree_params[1].memref.size = sizeof(msg_to_ree);
+
+	/* Incoming data from REE service */
+	ree_params[2].memref.buffer = TEE_Malloc(64, TEE_MALLOC_FILL_ZERO);
+	ree_params[2].memref.size = 64;
+
+	if (!ree_params[2].memref.buffer)
+		goto err;
+
+	DMSG("Invoking command on REE service\n");
+	result = TEE_InvokeREECommand(ree_sess, 0,
+			HELLO_REE_EXCHANGE_GREETINGS,
+			param_types, ree_params, &ret_origin);
+	if (result != TEE_SUCCESS) {
+		DMSG("Failed to invoke REE command\n");
+		goto err;
+	}
+
+	/* 
+	 * Expecting a string. The user of REE service is expected
+	 * to be careful while reading the string data and not read
+	 * more than the buffer allocated. This is just for reference.
+	 */
+	EMSG("REE filled buffer: %s\n", (char *)ree_params[2].memref.buffer);
+
+err:
+	if (ree_params[2].memref.buffer)
+		TEE_Free(ree_params[2].memref.buffer);
+	if (ree_sess)
+		TEE_CloseREESession(ree_sess);
+	return result;
+}
+
+static TEE_Result fill_random(uint32_t param_types, TEE_Param params[4])
+{
+	int i;
+	TEE_Result result = TEE_SUCCESS;
+	TEE_UUID uuid[] = {
+		TA_HELLO_REE_MSGQ_REE_UUID,
+		TA_HELLO_REE_DLL_REE_UUID
+	};
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_OUTPUT,
+			TEE_PARAM_TYPE_NONE,
+			TEE_PARAM_TYPE_NONE,
+			TEE_PARAM_TYPE_NONE);
 
 	DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	IMSG("Got value: %u from NW", params[0].value.a);
-	params[0].value.a++;
-	IMSG("Increase value to: %u", params[0].value.a);
+	/* Fill the random number */
+	TEE_GenerateRandom(&params[0].value.a, sizeof(params[0].value.a));
 
-	return TEE_SUCCESS;
+	/* Invoke both the REE services */
+	for (i = 0; i < sizeof(uuid)/sizeof(TEE_UUID); i++)
+		result |= invoke_ree_service(&uuid[i]);
+
+	if (result != TEE_SUCCESS)
+		result = TEE_ERROR_BAD_PARAMETERS;
+
+	return result;
 }
 
-static TEE_Result dec_value(uint32_t param_types,
-	TEE_Param params[4])
-{
-	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE,
-						   TEE_PARAM_TYPE_NONE);
-
-	DMSG("has been called");
-
-	if (param_types != exp_param_types)
-		return TEE_ERROR_BAD_PARAMETERS;
-
-	IMSG("Got value: %u from NW", params[0].value.a);
-	params[0].value.a--;
-	IMSG("Decrease value to: %u", params[0].value.a);
-
-	return TEE_SUCCESS;
-}
 /*
  * Called when a TA is invoked. sess_ctx hold that value that was
  * assigned by TA_OpenSessionEntryPoint(). The rest of the paramters
  * comes from normal world.
  */
 TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
-			uint32_t cmd_id,
-			uint32_t param_types, TEE_Param params[4])
+		uint32_t cmd_id,
+		uint32_t param_types, TEE_Param params[4])
 {
 	(void)&sess_ctx; /* Unused parameter */
 
 	switch (cmd_id) {
-	case TA_HELLO_WORLD_CMD_INC_VALUE:
-		return inc_value(param_types, params);
-	case TA_HELLO_WORLD_CMD_DEC_VALUE:
-		return dec_value(param_types, params);
+	case TA_HELLO_REE_FILL_RANDOM_NUMBER:
+		return fill_random(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
