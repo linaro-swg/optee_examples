@@ -22,7 +22,8 @@ TEEC_Result process_tee_params(size_t num_params, struct tee_params *params)
 	{
 		char *msg = "Hello! from DLL";
 		memcpy(params[2].u.memref.buffer, msg, strlen(msg) + 1);
-		printf("dll: Received: %s\n", (char *)params[1].u.memref.buffer);
+		printf("dll: Received: %s\n",
+					(char *)params[1].u.memref.buffer);
 		break;
 	}
 
@@ -35,7 +36,8 @@ TEEC_Result process_tee_params(size_t num_params, struct tee_params *params)
 		break;
 
 	default:
-		printf("dll: Unknown command received: %lu\n", params[0].u.value.a);
+		printf("dll: Unknown command received: %lu\n",
+						params[0].u.value.a);
 		break;
 	}
 
