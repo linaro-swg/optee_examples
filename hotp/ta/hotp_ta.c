@@ -140,6 +140,9 @@ static TEE_Result register_shared_key(uint32_t param_types, TEE_Param params[4])
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
+	if (params[0].memref.size > sizeof(K))
+		return TEE_ERROR_BAD_PARAMETERS;
+
 	memset(K, 0, sizeof(K));
 	memcpy(K, params[0].memref.buffer, params[0].memref.size);
 
