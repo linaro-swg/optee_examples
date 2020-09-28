@@ -103,8 +103,11 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 
 	TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
 
-	data = (char *)params[1].memref.buffer;
 	data_sz = params[1].memref.size;
+	data = TEE_Malloc(data_sz, 0);
+	if (!data)
+		return TEE_ERROR_OUT_OF_MEMORY;
+	TEE_MemMove(data, params[1].memref.buffer, data_sz);
 
 	/*
 	 * Create object in secure storage and fill with data
@@ -123,6 +126,7 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 	if (res != TEE_SUCCESS) {
 		EMSG("TEE_CreatePersistentObject failed 0x%08x", res);
 		TEE_Free(obj_id);
+		TEE_Free(data);
 		return res;
 	}
 
@@ -134,6 +138,7 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 		TEE_CloseObject(object);
 	}
 	TEE_Free(obj_id);
+	TEE_Free(data);
 	return res;
 }
 
@@ -166,8 +171,10 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 
 	TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
 
-	data = (char *)params[1].memref.buffer;
 	data_sz = params[1].memref.size;
+	data = TEE_Malloc(data_sz, 0);
+	if (!data)
+		return TEE_ERROR_OUT_OF_MEMORY;
 
 	/*
 	 * Check the object exist and can be dumped into output buffer
@@ -181,6 +188,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to open persistent object, res=0x%08x", res);
 		TEE_Free(obj_id);
+		TEE_Free(data);
 		return res;
 	}
 
@@ -202,6 +210,8 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 
 	res = TEE_ReadObjectData(object, data, object_info.dataSize,
 				 &read_bytes);
+	if (res == TEE_SUCCESS)
+		TEE_MemMove(params[1].memref.buffer, data, read_bytes);
 	if (res != TEE_SUCCESS || read_bytes != object_info.dataSize) {
 		EMSG("TEE_ReadObjectData failed 0x%08x, read %" PRIu32 " over %u",
 				res, read_bytes, object_info.dataSize);
@@ -213,6 +223,7 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 exit:
 	TEE_CloseObject(object);
 	TEE_Free(obj_id);
+	TEE_Free(data);
 	return res;
 }
 
