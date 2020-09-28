@@ -69,11 +69,15 @@ static TEE_Result random_number_generate(uint32_t param_types,
 						TEE_PARAM_TYPE_NONE,
 						TEE_PARAM_TYPE_NONE,
 						TEE_PARAM_TYPE_NONE);
+	void *buf = NULL;
 
 	DMSG("has been called");
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
+	buf = TEE_Malloc(params[0].memref.size, 0);
+	if (!buf)
+		return TEE_ERROR_OUT_OF_MEMORY;
 	IMSG("Generating random data over %u bytes.", params[0].memref.size);
 	/*
 	 * The TEE_GenerateRandom function is a part of TEE Internal Core API,
@@ -83,7 +87,9 @@ static TEE_Result random_number_generate(uint32_t param_types,
 	 * @ randomBuffer : Reference to generated random data
 	 * @ randomBufferLen : Byte length of requested random data
 	 */
-	TEE_GenerateRandom(params[0].memref.buffer, params[0].memref.size);
+	TEE_GenerateRandom(buf, params[0].memref.size);
+	TEE_MemMove(params[0].memref.buffer, buf, params[0].memref.size);
+	TEE_Free(buf);
 
 	return TEE_SUCCESS;
 }
