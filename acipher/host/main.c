@@ -13,7 +13,7 @@
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
 
-/* To the the UUID (found the the TA's h-file(s)) */
+/* For the UUID (found in the TA's h-file(s)) */
 #include <acipher_ta.h>
 
 static void usage(int argc, char *argv[])
