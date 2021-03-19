@@ -1,3 +1,4 @@
+# Client Application
 project (optee_example_secure_storage C)
 
 set (SRC host/main.c)
@@ -11,3 +12,6 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries (${PROJECT_NAME} PRIVATE teec)
 
 install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Trusted Application
+define_ta_source_dir(secure_storage "ta")
