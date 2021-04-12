@@ -18,7 +18,7 @@ BINARY = optee_example_hello_world
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
-	$(CC) -o $@ $< $(LDADD)
+	$(CC) $(LDFLAGS) -o $@ $< $(LDADD)
 
 .PHONY: clean
 clean:

@@ -18,7 +18,7 @@ BINARY = optee_example_acipher
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
-	$(CC) -o $@ $< $(LDADD)
+	$(CC) $(LDFLAGS) -o $@ $< $(LDADD)
 
 .PHONY: clean
 clean:
