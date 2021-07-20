@@ -25,14 +25,19 @@ prepare-for-rootfs: examples
 	@mkdir -p $(OUTPUT_DIR)
 	@mkdir -p $(OUTPUT_DIR)/ta
 	@mkdir -p $(OUTPUT_DIR)/ca
+	@mkdir -p $(OUTPUT_DIR)/plugins
 	@for example in $(EXAMPLE_LIST); do \
 		if [ -e $$example/host/optee_example_$$example ]; then \
 			cp -p $$example/host/optee_example_$$example $(OUTPUT_DIR)/ca/; \
 		fi; \
 		cp -pr $$example/ta/*.ta $(OUTPUT_DIR)/ta/; \
+		if [ $$example == plugins ]; then \
+			cp -p plugins/syslog/*.plugin $(OUTPUT_DIR)/plugins/; \
+		fi; \
 	done
 
 prepare-for-rootfs-clean:
 	@rm -rf $(OUTPUT_DIR)/ta
 	@rm -rf $(OUTPUT_DIR)/ca
+	@rm -rf $(OUTPUT_DIR)/plugins
 	@rmdir --ignore-fail-on-non-empty $(OUTPUT_DIR) || test ! -e $(OUTPUT_DIR)
