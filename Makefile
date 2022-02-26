@@ -31,7 +31,7 @@ prepare-for-rootfs: examples
 			cp -p $$example/host/optee_example_$$example $(OUTPUT_DIR)/ca/; \
 		fi; \
 		cp -pr $$example/ta/*.ta $(OUTPUT_DIR)/ta/; \
-		if [ $$example == plugins ]; then \
+		if [ $$example = plugins ]; then \
 			cp -p plugins/syslog/*.plugin $(OUTPUT_DIR)/plugins/; \
 		fi; \
 	done
