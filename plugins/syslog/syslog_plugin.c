@@ -25,7 +25,7 @@ static TEEC_Result write_syslog(unsigned int sub_cmd, void *data, size_t data_le
 {
 	/* 'sub_cmd' in this case means priority according syslog.h */
 	openlog(NULL, LOG_CONS | LOG_PID, LOG_DAEMON);
-	syslog(sub_cmd, "%*s", (int)data_len, (const char *)data);
+	syslog(sub_cmd, "%.*s", (int)data_len, (const char *)data);
 	closelog();
 
 	return TEEC_SUCCESS;
