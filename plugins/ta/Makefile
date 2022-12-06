@@ -1,4 +1,5 @@
 CFG_TEE_TA_LOG_LEVEL ?= 4
+CFG_TA_OPTEE_CORE_API_COMPAT_1_1=y
 
 # The UUID for the Trusted Application
 BINARY=2a287631-de1b-4fdd-a55c-b9312e40769a
