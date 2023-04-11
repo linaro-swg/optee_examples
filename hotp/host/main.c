@@ -75,7 +75,12 @@ int main(void)
 	op.params[0].tmpref.buffer = K;
 	op.params[0].tmpref.size = sizeof(K);
 
-	fprintf(stdout, "Register the shared key: %s\n", K);
+	fprintf(stdout, "Register the shared key: ");
+	for (i = 0; i < sizeof(K); i++) {
+        	fprintf(stdout, "%02x ", K[i]);
+    	}
+	fprintf(stdout, "\n");
+
 	res = TEEC_InvokeCommand(&sess, TA_HOTP_CMD_REGISTER_SHARED_KEY,
 				 &op, &err_origin);
 	if (res != TEEC_SUCCESS) {

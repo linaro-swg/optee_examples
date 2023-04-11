@@ -19,16 +19,21 @@
 /* Dynamic Binary Code 2 Modulo, which is 10^6 according to the spec. */
 #define DBC2_MODULO 1000000
 
+/* The size of a counter in bytes. */
+#define COUNTER_SIZE 8
+
 /*
  * Currently this only supports a single key, in the future this could be
  * updated to support multiple users, all with different unique keys (stored
  * using secure storage).
  */
-static uint8_t K[MAX_KEY_SIZE];
-static uint32_t K_len;
-
-/* The counter as defined by RFC4226. */
-static uint8_t counter[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+struct hotp_key
+{
+	uint8_t K[MAX_KEY_SIZE];
+	uint32_t K_len;
+	/* The counter as defined by RFC4226. */
+	uint8_t counter[COUNTER_SIZE];
+};
 
 /*
  *  HMAC a block of memory to produce the authentication tag
@@ -126,7 +131,8 @@ static void truncate(uint8_t *hmac_result, uint32_t *bin_code)
 	*bin_code %= DBC2_MODULO;
 }
 
-static TEE_Result register_shared_key(uint32_t param_types, TEE_Param params[4])
+static TEE_Result register_shared_key(struct hotp_key *state, 
+					uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
 
@@ -140,19 +146,20 @@ static TEE_Result register_shared_key(uint32_t param_types, TEE_Param params[4])
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	if (params[0].memref.size > sizeof(K))
+	if (params[0].memref.size > sizeof(state->K))
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	memset(K, 0, sizeof(K));
-	memcpy(K, params[0].memref.buffer, params[0].memref.size);
+	memset(state->K, 0, sizeof(state->K));
+	memcpy(state->K, params[0].memref.buffer, params[0].memref.size);
 
-	K_len = params[0].memref.size;
-	DMSG("Got shared key %s (%u bytes).", K, params[0].memref.size);
+	state->K_len = params[0].memref.size;
+	DMSG("Got shared key %s (%u bytes).", state->K, params[0].memref.size);
 
 	return res;
 }
 
-static TEE_Result get_hotp(uint32_t param_types, TEE_Param params[4])
+static TEE_Result get_hotp(struct hotp_key *state, 
+					uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
 	uint32_t hotp_val;
@@ -170,11 +177,12 @@ static TEE_Result get_hotp(uint32_t param_types, TEE_Param params[4])
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	res = hmac_sha1(K, K_len, counter, sizeof(counter), mac, &mac_len);
+	res = hmac_sha1(state->K, state->K_len, state->counter, 
+			sizeof(state->counter), mac, &mac_len);
 
 	/* Increment the counter. */
-	for (i = sizeof(counter) - 1; i >= 0; i--) {
-		if (++counter[i])
+	for (i = sizeof(state->counter) - 1; i >= 0; i--) {
+		if (++(state->counter)[i])
 			break;
 	}
 
@@ -199,8 +207,10 @@ void TA_DestroyEntryPoint(void)
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 				    TEE_Param __unused params[4],
-				    void __unused **sess_ctx)
+				    void **sess_ctx)
 {
+	struct hotp_key *state = NULL;
+
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
@@ -208,23 +218,34 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
+	/*
+	 * Allocate and init state for the session.
+	 */
+	state = TEE_Malloc(sizeof(*state), 0);
+	if (!state)
+		return TEE_ERROR_OUT_OF_MEMORY;
+
+	*sess_ctx = state;
+
 	return TEE_SUCCESS;
 }
 
-void TA_CloseSessionEntryPoint(void __unused *sess_ctx)
+void TA_CloseSessionEntryPoint(void *sess_ctx)
 {
+	TEE_Free(sess_ctx);
+	sess_ctx = NULL;
 }
 
-TEE_Result TA_InvokeCommandEntryPoint(void __unused *sess_ctx,
+TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx,
 				      uint32_t cmd_id,
 				      uint32_t param_types, TEE_Param params[4])
 {
 	switch (cmd_id) {
 	case TA_HOTP_CMD_REGISTER_SHARED_KEY:
-		return register_shared_key(param_types, params);
+		return register_shared_key(sess_ctx, param_types, params);
 
 	case TA_HOTP_CMD_GET_HOTP:
-		return get_hotp(param_types, params);
+		return get_hotp(sess_ctx, param_types, params);
 
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
