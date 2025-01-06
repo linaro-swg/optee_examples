@@ -194,6 +194,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	TEE_InitRefAttribute(&attr, TEE_ATTR_SECRET_VALUE, key, sess->key_size);
 
 	res = TEE_PopulateTransientObject(sess->key_handle, &attr, 1);
+	TEE_Free(key);
 	if (res != TEE_SUCCESS) {
 		EMSG("TEE_PopulateTransientObject failed, %x", res);
 		goto err;
