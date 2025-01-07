@@ -49,4 +49,10 @@
 /* Provisioned heap size for TEE_Malloc() and friends */
 #define TA_DATA_SIZE			(32 * 1024)
 
+/* The gpd.ta.version property */
+#define TA_VERSION	"1.0"
+
+/* The gpd.ta.description property */
+#define TA_DESCRIPTION	"Example of how a TA can get a buffer of random bytes"
+
 #endif /* USER_TA_HEADER_DEFINES_H */
