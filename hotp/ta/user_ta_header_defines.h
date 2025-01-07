@@ -22,4 +22,10 @@
 /* Provisioned heap size for TEE_Malloc() and friends */
 #define TA_DATA_SIZE	(32 * 1024)
 
+/* The gpd.ta.version property */
+#define TA_VERSION	"1.0"
+
+/* The gpd.ta.description property */
+#define TA_DESCRIPTION	"Example of One Time Passwords based HMAC operation (RFC4226)"
+
 #endif
