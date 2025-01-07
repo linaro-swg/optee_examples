@@ -1,0 +1,15 @@
+{
+  "eat-profile": "http://arm.com/psa/2.0.0",
+  "psa-client-id": 1,
+  "psa-security-lifecycle": 12288,
+  "psa-implementation-id": "YWNtZS1pbXBsZW1lbnRhdGlvbi1pZC0wMDAwMDAwMDE=",
+  "psa-software-components": [
+    {
+      "measurement-type": "PRoT",
+      "measurement-value": "KAnwpOcg4BXhGp/0onvYCH3rnH3wR6xHj9hOrTropX4=",
+      "signer-id": "rLsRx+TaIXIFUjzkzhokWuGiOa48a/2eeHH35di66Gs="
+    }
+  ],
+  "psa-instance-id": "Ac7rrnuJJ6MiflMDz14PH3s0u1Qq1yUKwD+83jbsLxUI",
+  "psa-nonce": "iwnc5TjbtaYGUp4u9p8Os5K+JmQrRFL/E7W04kT9Hgo="
+}
