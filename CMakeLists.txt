@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.5)
 project (optee_examples C)
 
 # https://cmake.org/Wiki/CMake_Useful_Variables
