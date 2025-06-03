@@ -38,7 +38,7 @@
 
 #define TA_FLAGS			(TA_FLAG_EXEC_DDR | TA_FLAG_SINGLE_INSTANCE)
 
-/* Provisioned heap size for TEE_Malloc() and friends */
+/* Provisioned stack size */
 #define TA_STACK_SIZE			(2 * 1024)
 
 /* Provisioned heap size for TEE_Malloc() and friends */
