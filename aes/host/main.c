@@ -46,6 +46,7 @@
 struct test_ctx {
 	TEEC_Context ctx;
 	TEEC_Session sess;
+	uint32_t algo_num;
 };
 
 void prepare_tee_session(struct test_ctx *ctx)
@@ -85,7 +86,7 @@ void prepare_aes(struct test_ctx *ctx, int encode)
 					 TEEC_VALUE_INPUT,
 					 TEEC_NONE);
 
-	op.params[0].value.a = TA_AES_ALGO_CTR;
+	op.params[0].value.a = ctx->algo_num;
 	op.params[1].value.a = TA_AES_SIZE_128BIT;
 	op.params[2].value.a = encode ? TA_AES_MODE_ENCODE :
 					TA_AES_MODE_DECODE;
@@ -126,6 +127,12 @@ void set_iv(struct test_ctx *ctx, char *iv, size_t iv_sz)
 	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					  TEEC_NONE, TEEC_NONE, TEEC_NONE);
+
+	if (ctx->algo_num == TA_AES_ALGO_ECB) {
+		iv = NULL;
+		iv_sz = 0;
+	}
+
 	op.params[0].tmpref.buffer = iv;
 	op.params[0].tmpref.size = iv_sz;
 
@@ -158,7 +165,7 @@ void cipher_buffer(struct test_ctx *ctx, char *in, char *out, size_t sz)
 			res, origin);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	struct test_ctx ctx;
 	char key[AES_TEST_KEY_SIZE];
@@ -166,6 +173,25 @@ int main(void)
 	char clear[AES_TEST_BUFFER_SIZE];
 	char ciph[AES_TEST_BUFFER_SIZE];
 	char temp[AES_TEST_BUFFER_SIZE];
+	char *algo;
+
+	if (argc > 1) {
+		algo = argv[1];
+		printf("%s algo selected\n", algo);
+		if (strcmp(algo, "TA_AES_ALGO_ECB") == 0) {
+			ctx.algo_num = TA_AES_ALGO_ECB;
+		} else if (strcmp(algo, "TA_AES_ALGO_CBC") == 0) {
+			ctx.algo_num = TA_AES_ALGO_CBC;
+		} else if (strcmp(algo, "TA_AES_ALGO_CTR") == 0) {
+			ctx.algo_num = TA_AES_ALGO_CTR;
+		} else {
+			printf("%s algo is invalid\n", algo);
+			return -1;
+		}
+	} else {
+		printf("TA_AES_ALGO_CTR algo selected\n");
+		ctx.algo_num = TA_AES_ALGO_CTR;
+	}
 
 	printf("Prepare session with the TA\n");
 	prepare_tee_session(&ctx);
