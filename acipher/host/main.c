@@ -16,6 +16,9 @@
 /* For the UUID (found in the TA's h-file(s)) */
 #include <acipher_ta.h>
 
+#define ENCRYPT		1
+#define DECRYPT		0
+
 static void usage(int argc, char *argv[])
 {
 	const char *pname = "acipher";
@@ -23,17 +26,19 @@ static void usage(int argc, char *argv[])
 	if (argc)
 		pname = argv[0];
 
-	fprintf(stderr, "usage: %s <key_size> <string to encrypt>\n", pname);
+	fprintf(stderr, "%s: %s <key_size> <string to encrypt> <algo name>\n",
+		__func__, pname);
 	exit(1);
 }
 
 static void get_args(int argc, char *argv[], size_t *key_size, void **inbuf,
-		     size_t *inbuf_len)
+		     size_t *inbuf_len, uint32_t *algo_num)
 {
 	char *ep;
 	long ks;
+	char *algo;
 
-	if (argc != 3) {
+	if ((argc > 4) || (argc < 3)) {
 		warnx("Unexpected number of arguments %d (expected 2)",
 		      argc - 1);
 		usage(argc, argv);
@@ -52,6 +57,32 @@ static void get_args(int argc, char *argv[], size_t *key_size, void **inbuf,
 
 	*inbuf = argv[2];
 	*inbuf_len = strlen(argv[2]);
+
+	if (argc > 3) {
+		algo = argv[3];
+		printf("%s algo selected\n", algo);
+		if (strcmp(algo, "TA_ALG_OAEP_MGF1_SHA1") == 0) {
+			*algo_num = TA_ALG_OAEP_MGF1_SHA1;
+		} else if (strcmp(algo, "TA_ALG_OAEP_MGF1_SHA224") == 0) {
+			*algo_num = TA_ALG_OAEP_MGF1_SHA224;
+		} else if (strcmp(algo, "TA_ALG_OAEP_MGF1_SHA256") == 0) {
+			*algo_num = TA_ALG_OAEP_MGF1_SHA256;
+		} else if (strcmp(algo, "TA_ALG_OAEP_MGF1_SHA384") == 0) {
+			*algo_num = TA_ALG_OAEP_MGF1_SHA384;
+		} else if (strcmp(algo, "TA_ALG_OAEP_MGF1_SHA512") == 0) {
+			*algo_num = TA_ALG_OAEP_MGF1_SHA512;
+		} else if (strcmp(algo, "TA_ALG_PKCS1_V1_5") == 0) {
+			*algo_num = TA_ALG_PKCS1_V1_5;
+		} else {
+			printf("%s algo is invalid\n", algo);
+			usage(argc, argv);
+		}
+	} else {
+		printf("TA_ALG_PKCS1_V1_5 algo selected\n");
+		*algo_num = TA_ALG_PKCS1_V1_5;
+	}
+
+
 }
 
 static void teec_err(TEEC_Result res, uint32_t eo, const char *str)
@@ -69,10 +100,13 @@ int main(int argc, char *argv[])
 	size_t key_size;
 	void *inbuf;
 	size_t inbuf_len;
+	void *outbuf = NULL;
+	size_t outbuf_len = 0;
 	size_t n;
+	uint32_t algo_num;
 	const TEEC_UUID uuid = TA_ACIPHER_UUID;
 
-	get_args(argc, argv, &key_size, &inbuf, &inbuf_len);
+	get_args(argc, argv, &key_size, &inbuf, &inbuf_len, &algo_num);
 
 	res = TEEC_InitializeContext(NULL, &ctx);
 	if (res)
@@ -95,26 +129,62 @@ int main(int argc, char *argv[])
 	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_MEMREF_TEMP_OUTPUT,
-					 TEEC_NONE, TEEC_NONE);
+					 TEEC_VALUE_INPUT, TEEC_VALUE_INPUT);
 	op.params[0].tmpref.buffer = inbuf;
 	op.params[0].tmpref.size = inbuf_len;
+	op.params[2].value.a = ENCRYPT; /* encrypt */
+	op.params[3].value.a = algo_num;
 
 	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
 	if (eo != TEEC_ORIGIN_TRUSTED_APP || res != TEEC_ERROR_SHORT_BUFFER)
 		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_ENCRYPT)");
 
+	outbuf_len = op.params[1].tmpref.size;
 	op.params[1].tmpref.buffer = malloc(op.params[1].tmpref.size);
 	if (!op.params[1].tmpref.buffer)
 		err(1, "Cannot allocate out buffer of size %zu",
-		    op.params[1].tmpref.size);
+		    outbuf_len);
 
 	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
 	if (res)
 		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_ENCRYPT)");
 
+	outbuf = malloc(outbuf_len);
+	if (!outbuf)
+		err(1, "Cannot allocate out buffer of size %zu", outbuf_len);
+
+	memmove(outbuf, op.params[1].tmpref.buffer, outbuf_len);
 	printf("Encrypted buffer: ");
-	for (n = 0; n < op.params[1].tmpref.size; n++)
-		printf("%02x ", ((uint8_t *)op.params[1].tmpref.buffer)[n]);
+	for (n = 0; n < outbuf_len; n++)
+		printf("%02x ", ((uint8_t *)outbuf)[n]);
 	printf("\n");
+
+	memset(&op, 0, sizeof(op));
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+					 TEEC_MEMREF_TEMP_OUTPUT,
+					 TEEC_VALUE_INPUT, TEEC_VALUE_INPUT);
+	op.params[0].tmpref.buffer = outbuf;
+	op.params[0].tmpref.size = outbuf_len;
+	op.params[2].value.a = DECRYPT; /* decrypt */
+	op.params[3].value.a = algo_num;
+
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	if (eo != TEEC_ORIGIN_TRUSTED_APP || res != TEEC_ERROR_SHORT_BUFFER)
+		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_DYCRYPT)");
+
+	op.params[1].tmpref.buffer = malloc(op.params[1].tmpref.size);
+	if (!op.params[1].tmpref.buffer)
+		err(1, "Cannot allocate out buffer of size %zu",
+		    outbuf_len);
+
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	if (res)
+		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_DYCRYPT)");
+
+	if (memcmp(inbuf, op.params[1].tmpref.buffer, op.params[1].tmpref.size))
+		printf("message is not matching\n");
+	else
+		printf("message is matching successfully\n");
+
 	return 0;
 }

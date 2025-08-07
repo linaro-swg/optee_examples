@@ -32,7 +32,8 @@ static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 
 	res = TEE_AllocateTransientObject(key_type, key_size, &key);
 	if (res) {
-		EMSG("TEE_AllocateTransientObject(%#" PRIx32 ", %" PRId32 "): %#" PRIx32, key_type, key_size, res);
+		EMSG("TEE_AllocateTransientObject(%#" PRIx32 ", %" PRId32 "): %#"
+		     PRIx32, key_type, key_size, res);
 		return res;
 	}
 
@@ -49,6 +50,33 @@ static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 	return TEE_SUCCESS;
 }
 
+static TEE_Result select_algo(uint32_t param, uint32_t *algo)
+{
+	switch (param) {
+	case TA_ALG_PKCS1_V1_5:
+		*algo = TEE_ALG_RSAES_PKCS1_V1_5;
+		return TEE_SUCCESS;
+	case TA_ALG_OAEP_MGF1_SHA1:
+		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA1;
+		return TEE_SUCCESS;
+	case TA_ALG_OAEP_MGF1_SHA224:
+		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA224;
+		return TEE_SUCCESS;
+	case TA_ALG_OAEP_MGF1_SHA256:
+		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA256;
+		return TEE_SUCCESS;
+	case TA_ALG_OAEP_MGF1_SHA384:
+		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA384;
+		return TEE_SUCCESS;
+	case TA_ALG_OAEP_MGF1_SHA512:
+		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA512;
+		return TEE_SUCCESS;
+	default:
+		EMSG("Invalid algo %u", param);
+		return TEE_ERROR_BAD_PARAMETERS;
+	}
+}
+
 static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 			  TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -57,13 +85,14 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	uint32_t inbuf_len;
 	void *outbuf;
 	uint32_t outbuf_len;
+	uint32_t alg_num;
 	TEE_OperationHandle op;
 	TEE_ObjectInfo key_info;
-	const uint32_t alg = TEE_ALG_RSAES_PKCS1_V1_5;
+	uint32_t encrypt;
 	const uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 						TEE_PARAM_TYPE_MEMREF_OUTPUT,
-						TEE_PARAM_TYPE_NONE,
-						TEE_PARAM_TYPE_NONE);
+						TEE_PARAM_TYPE_VALUE_INPUT,
+						TEE_PARAM_TYPE_VALUE_INPUT);
 
 	if (pt != exp_pt)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -81,10 +110,21 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	outbuf = params[1].memref.buffer;
 	outbuf_len = params[1].memref.size;
 
-	res = TEE_AllocateOperation(&op, alg, TEE_MODE_ENCRYPT,
+	res = select_algo(params[3].value.a, &alg_num);
+	if (res != TEE_SUCCESS)
+		return res;
+
+	if (params[2].value.a)
+		encrypt = TEE_MODE_ENCRYPT;
+	else
+		encrypt = TEE_MODE_DECRYPT;
+
+	res = TEE_AllocateOperation(&op, alg_num, encrypt,
 				    key_info.keySize);
 	if (res) {
-		EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#" PRIx32 ", %" PRId32 "): %#" PRIx32, alg, key_info.keySize, res);
+		EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#"
+		     PRIx32 ", %" PRId32 "): %#" PRIx32,
+		     alg_num, key_info.keySize, res);
 		return res;
 	}
 
@@ -94,10 +134,22 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 		goto out;
 	}
 
-	res = TEE_AsymmetricEncrypt(op, NULL, 0, inbuf, inbuf_len, outbuf,
-				    &outbuf_len);
-	if (res) {
-		EMSG("TEE_AsymmetricEncrypt(%" PRId32 ", %" PRId32 "): %#" PRIx32, inbuf_len, params[1].memref.size, res);
+	if (encrypt == TEE_MODE_ENCRYPT) {
+		res = TEE_AsymmetricEncrypt(op, NULL, 0, inbuf,
+					    inbuf_len, outbuf, &outbuf_len);
+		if (res) {
+			EMSG("TEE_AsymmetricEncrypt(%" PRId32 ", %"
+			     PRId32 "): %#" PRIx32, inbuf_len,
+			     params[1].memref.size, res);
+		}
+	} else {
+		res = TEE_AsymmetricDecrypt(op, NULL, 0, inbuf, inbuf_len,
+					    outbuf, &outbuf_len);
+		if (res) {
+			EMSG("TEE_AsymmetricDecrypt(%" PRId32 ", %"
+			     PRId32 "): %#" PRIx32, inbuf_len,
+			     params[1].memref.size, res);
+		}
 	}
 	params[1].memref.size = outbuf_len;
 
