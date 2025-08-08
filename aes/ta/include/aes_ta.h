@@ -45,6 +45,8 @@
 #define TA_AES_ALGO_ECB			0
 #define TA_AES_ALGO_CBC			1
 #define TA_AES_ALGO_CTR			2
+#define TA_AES_ALGO_CCM			3
+#define TA_AES_ALGO_GCM			4
 
 #define TA_AES_SIZE_128BIT		(128 / 8)
 #define TA_AES_SIZE_256BIT		(256 / 8)
@@ -78,5 +80,15 @@
  * param[3] unused
  */
 #define TA_AES_CMD_CIPHER		3
+
+/*
+ * TA_AES_CMD_AUTHENC - Encrypt and Decrypt the message
+ * param[0] (memref) in: plain text for encryption, cipher text for decryption
+ * param[1] (memref) out: cipher text for encryption, plain text for decryption
+ * param[2] (value.a) in: 0 for decryption, any other value for encryption
+ * param[3] (memref) in/out: output generated tag for encryption
+ *				input authentication tag for decryption.
+ */
+#define TA_AES_CMD_AUTHENC		4
 
 #endif /* __AES_TA_H */
