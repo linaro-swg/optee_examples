@@ -165,6 +165,42 @@ void cipher_buffer(struct test_ctx *ctx, char *in, char *out, size_t sz)
 			res, origin);
 }
 
+void auth_enc_op(struct test_ctx *ctx, uint32_t encrypt, void *in_buf, size_t
+		  in_sz, void *out_buf, size_t *out_sz, void *tag, size_t
+		  *tag_len)
+{
+	TEEC_Operation op;
+	TEEC_Result res;
+	uint32_t err_origin;
+
+	memset(&op, 0, sizeof(op));
+
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+					 TEEC_MEMREF_TEMP_OUTPUT,
+					 TEEC_VALUE_INPUT,
+					 TEEC_MEMREF_TEMP_INOUT);
+	op.params[0].tmpref.buffer = in_buf;
+	op.params[0].tmpref.size = in_sz;
+
+	op.params[1].tmpref.buffer = out_buf;
+	op.params[1].tmpref.size = *out_sz;
+
+	op.params[2].value.a = encrypt;
+
+	op.params[3].tmpref.buffer = tag;
+	op.params[3].tmpref.size = *tag_len;
+
+	res = TEEC_InvokeCommand(&ctx->sess, TA_AES_CMD_AUTHENC,
+				 &op, &err_origin);
+
+	if (res == TEEC_SUCCESS) {
+		*out_sz = op.params[1].tmpref.size;
+		*tag_len = op.params[3].tmpref.size;
+	} else {
+		errx(1, "InvokeCommand failed with %x\n", res);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct test_ctx ctx;
@@ -174,6 +210,13 @@ int main(int argc, char *argv[])
 	char ciph[AES_TEST_BUFFER_SIZE];
 	char temp[AES_TEST_BUFFER_SIZE];
 	char *algo;
+	char plaintext[] = "TestCCMMessage";
+	uint8_t ciphertext[80] = {0};
+	uint8_t decrypted[80] = {0};
+	size_t ct_len = sizeof(ciphertext);
+	size_t dec_len = sizeof(decrypted);
+	uint8_t tag[16] = {0};
+	size_t tag_len = 16;
 
 	if (argc > 1) {
 		algo = argv[1];
@@ -184,6 +227,10 @@ int main(int argc, char *argv[])
 			ctx.algo_num = TA_AES_ALGO_CBC;
 		} else if (strcmp(algo, "TA_AES_ALGO_CTR") == 0) {
 			ctx.algo_num = TA_AES_ALGO_CTR;
+		} else if (strcmp(algo, "TA_AES_ALGO_CCM") == 0) {
+			ctx.algo_num = TA_AES_ALGO_CCM;
+		} else if (strcmp(algo, "TA_AES_ALGO_GCM") == 0) {
+			ctx.algo_num = TA_AES_ALGO_GCM;
 		} else {
 			printf("%s algo is invalid\n", algo);
 			return -1;
@@ -203,13 +250,19 @@ int main(int argc, char *argv[])
 	memset(key, 0xa5, sizeof(key)); /* Load some dummy value */
 	set_key(&ctx, key, AES_TEST_KEY_SIZE);
 
-	printf("Reset ciphering operation in TA (provides the initial vector)\n");
-	memset(iv, 0, sizeof(iv)); /* Load some dummy value */
-	set_iv(&ctx, iv, AES_BLOCK_SIZE);
-
-	printf("Encode buffer from TA\n");
-	memset(clear, 0x5a, sizeof(clear)); /* Load some dummy value */
-	cipher_buffer(&ctx, clear, ciph, AES_TEST_BUFFER_SIZE);
+	if ((ctx.algo_num == TA_AES_ALGO_CCM) || (ctx.algo_num == TA_AES_ALGO_GCM)) {
+		printf("AE encode operation in TA\n");
+		auth_enc_op(&ctx, TA_AES_MODE_ENCODE, plaintext,
+			    strlen(plaintext),  ciphertext, &ct_len,
+			    tag, &tag_len);
+	} else {
+		printf("Reset ciphering operation in TA (provides the initial vector)\n");
+		memset(iv, 0, sizeof(iv)); /* Load some dummy value */
+		set_iv(&ctx, iv, AES_BLOCK_SIZE);
+		printf("Encode buffer from TA\n");
+		memset(clear, 0x5a, sizeof(clear)); /* Load some dummy value */
+		cipher_buffer(&ctx, clear, ciph, AES_TEST_BUFFER_SIZE);
+	}
 
 	printf("Prepare decode operation\n");
 	prepare_aes(&ctx, DECODE);
@@ -218,18 +271,31 @@ int main(int argc, char *argv[])
 	memset(key, 0xa5, sizeof(key)); /* Load some dummy value */
 	set_key(&ctx, key, AES_TEST_KEY_SIZE);
 
-	printf("Reset ciphering operation in TA (provides the initial vector)\n");
-	memset(iv, 0, sizeof(iv)); /* Load some dummy value */
-	set_iv(&ctx, iv, AES_BLOCK_SIZE);
-
-	printf("Decode buffer from TA\n");
-	cipher_buffer(&ctx, ciph, temp, AES_TEST_BUFFER_SIZE);
+	if ((ctx.algo_num == TA_AES_ALGO_CCM) || (ctx.algo_num == TA_AES_ALGO_GCM)) {
+		printf("AE decode operation in TA\n");
+		auth_enc_op(&ctx, TA_AES_MODE_DECODE, ciphertext, ct_len, decrypted,
+			     &dec_len, tag, &tag_len);
+	} else {
+		printf("Reset ciphering operation in TA (provides the initial vector)\n");
+		memset(iv, 0, sizeof(iv)); /* Load some dummy value */
+		set_iv(&ctx, iv, AES_BLOCK_SIZE);
+		printf("Decode buffer from TA\n");
+		cipher_buffer(&ctx, ciph, temp, AES_TEST_BUFFER_SIZE);
+	}
 
 	/* Check decoded is the clear content */
-	if (memcmp(clear, temp, AES_TEST_BUFFER_SIZE))
-		printf("Clear text and decoded text differ => ERROR\n");
-	else
-		printf("Clear text and decoded text match\n");
+	if ((ctx.algo_num == TA_AES_ALGO_CCM) || (ctx.algo_num == TA_AES_ALGO_GCM)) {
+		if (memcmp(plaintext, decrypted, strlen(plaintext)) == 0)
+			printf("CCM encryption/decryption successful!\n");
+		else
+			printf("Decryption failed or tag mismatch!\n");
+
+	} else {
+		if (memcmp(clear, temp, AES_TEST_BUFFER_SIZE))
+			printf("Clear text and decoded text differ => ERROR\n");
+		else
+			printf("Clear text and decoded text match\n");
+	}
 
 	terminate_tee_session(&ctx);
 	return 0;
