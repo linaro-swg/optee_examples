@@ -45,6 +45,8 @@
 #define TA_AES_ALGO_ECB			0
 #define TA_AES_ALGO_CBC			1
 #define TA_AES_ALGO_CTR			2
+#define TA_AES_ALGO_CCM			3
+#define TA_AES_ALGO_GCM			4
 
 #define TA_AES_SIZE_128BIT		(128 / 8)
 #define TA_AES_SIZE_256BIT		(256 / 8)
@@ -78,5 +80,7 @@
  * param[3] unused
  */
 #define TA_AES_CMD_CIPHER		3
+
+#define CMD_AUTH_AES_INIT		4
 
 #endif /* __AES_TA_H */
