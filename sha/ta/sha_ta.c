@@ -39,6 +39,9 @@ static TEE_Result ta2tee_algo_id(uint32_t param, uint32_t *algo)
 	case TA_ALGO_HMAC_SHA512:
 		*algo = TEE_ALG_HMAC_SHA512;
 		return TEE_SUCCESS;
+	case TA_ALG_AES_CMAC:
+		*algo = TEE_ALG_AES_CMAC;
+		return TEE_SUCCESS;
 	default:
 		EMSG("Invalid algo %u", param);
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -62,6 +65,9 @@ static TEE_Result ta2tee_obj_type(uint32_t param, uint32_t *tee_obj_type)
 		return TEE_SUCCESS;
 	case TA_TYPE_HMAC_SHA512:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA512;
+		return TEE_SUCCESS;
+	case TA_TYPE_AES:
+		*tee_obj_type = TEE_TYPE_AES;
 		return TEE_SUCCESS;
 	default:
 		EMSG("Invalid mode %u", param);

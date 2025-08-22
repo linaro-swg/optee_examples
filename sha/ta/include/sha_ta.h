@@ -26,6 +26,7 @@
 #define TA_ALGO_HMAC_SHA224		2
 #define TA_ALGO_HMAC_SHA384		3
 #define TA_ALGO_HMAC_SHA512		4
+#define TA_ALG_AES_CMAC			5
 
 /* Object types */
 #define TA_TYPE_HMAC_SHA256		0
@@ -33,6 +34,7 @@
 #define TA_TYPE_HMAC_SHA224		2
 #define TA_TYPE_HMAC_SHA384		3
 #define TA_TYPE_HMAC_SHA512		4
+#define TA_TYPE_AES			5
 
 /*
  * TA_SHA_CMD_SET_KEY - Allocate resources for the SHA operation

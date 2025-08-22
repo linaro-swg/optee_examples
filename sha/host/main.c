@@ -61,6 +61,7 @@ static void usage(int argc, char *argv[])
 	printf("TA_ALGO_HMAC_SHA256\n");
 	printf("TA_ALGO_HMAC_SHA384\n");
 	printf("TA_ALGO_HMAC_SHA512\n");
+	printf("TA_ALG_AES_CMAC\n");
 	exit(1);
 }
 
@@ -219,6 +220,10 @@ int main(int argc, char *argv[])
 			ctx.algo_num = TA_ALGO_HMAC_SHA512;
 			obj_type = TA_TYPE_HMAC_SHA512;
 			key_size = 128; /* 128 bytes */
+		} else if (strcmp(algo, "TA_ALG_AES_CMAC") == 0) {
+			ctx.algo_num = TA_ALG_AES_CMAC;
+			obj_type = TA_TYPE_AES;
+			key_size = 16; /* 16 bytes */
 		} else {
 			printf("%s algo is invalid\n", algo);
 			return -1;
