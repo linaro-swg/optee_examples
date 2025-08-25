@@ -165,7 +165,7 @@ void cipher_buffer(struct test_ctx *ctx, char *in, char *out, size_t sz)
 			res, origin);
 }
 
-void auth_aes_ops(struct test_ctx *ctx, bool encrypt, void *in_buf, size_t
+void auth_enc_op(struct test_ctx *ctx, uint32_t encrypt, void *in_buf, size_t
 		  in_sz, void *out_buf, size_t *out_sz, void *tag, size_t
 		  *tag_len)
 {
@@ -185,9 +185,9 @@ void auth_aes_ops(struct test_ctx *ctx, bool encrypt, void *in_buf, size_t
 	op.params[1].tmpref.buffer = out_buf;
 	op.params[1].tmpref.size = *out_sz;
 
-	op.params[2].value.a = encrypt ? 1 : 0;
+	op.params[2].value.a = encrypt;
 
-	op.params[3].tmpref.buffer = (void *)tag;
+	op.params[3].tmpref.buffer = tag;
 	op.params[3].tmpref.size = *tag_len;
 
 	res = TEEC_InvokeCommand(&ctx->sess, CMD_AUTH_AES_INIT, &op, &err_origin);
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 	set_key(&ctx, key, AES_TEST_KEY_SIZE);
 
 	if ((ctx.algo_num == TA_AES_ALGO_CCM) || (ctx.algo_num == TA_AES_ALGO_GCM)) {
-		auth_aes_ops(&ctx, true, (void *)plaintext,
+		auth_enc_op(&ctx, TA_AES_MODE_ENCODE, (void *)plaintext,
 					 strlen(plaintext),
 					 ciphertext, &ct_len, tag, &tag_len);
 	} else {
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 	set_key(&ctx, key, AES_TEST_KEY_SIZE);
 
 	if ((ctx.algo_num == TA_AES_ALGO_CCM) || (ctx.algo_num == TA_AES_ALGO_GCM)) {
-		auth_aes_ops(&ctx, false, ciphertext, ct_len, decrypted,
+		auth_enc_op(&ctx, TA_AES_MODE_DECODE, ciphertext, ct_len, decrypted,
 			     &dec_len, tag, &tag_len);
 	} else {
 		printf("Reset ciphering operation in TA (provides the initial vector)\n");
