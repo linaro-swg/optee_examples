@@ -190,7 +190,8 @@ void auth_enc_op(struct test_ctx *ctx, uint32_t encrypt, void *in_buf, size_t
 	op.params[3].tmpref.buffer = tag;
 	op.params[3].tmpref.size = *tag_len;
 
-	res = TEEC_InvokeCommand(&ctx->sess, CMD_AUTH_AES_INIT, &op, &err_origin);
+	res = TEEC_InvokeCommand(&ctx->sess, TA_AES_CMD_AUTHENC_INIT,
+				 &op, &err_origin);
 
 	if (res == TEEC_SUCCESS) {
 		*out_sz = op.params[1].tmpref.size;

@@ -81,6 +81,13 @@
  */
 #define TA_AES_CMD_CIPHER		3
 
-#define CMD_AUTH_AES_INIT		4
+/*
+ * TA_AES_CMD_AUTHENC_INIT - Encrypt and Decrypt the message
+ * param[0] (memref) input buffer
+ * param[1] (memref) output buffer
+ * param[2] (value) input value
+ * param[3] (memref) output buffer
+ */
+#define TA_AES_CMD_AUTHENC_INIT		4
 
 #endif /* __AES_TA_H */

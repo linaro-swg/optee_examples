@@ -368,7 +368,7 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 				params[1].memref.buffer, &params[1].memref.size);
 }
 
-static TEE_Result auth_aes_op(void *session, uint32_t param_types, TEE_Param params[4])
+static TEE_Result auth_enc_op(void *session, uint32_t param_types, TEE_Param params[4])
 {
 	const uint32_t expected_pt =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -526,8 +526,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session,
 		return reset_aes_iv(session, param_types, params);
 	case TA_AES_CMD_CIPHER:
 		return cipher_buffer(session, param_types, params);
-	case CMD_AUTH_AES_INIT:
-		return auth_aes_op(session, param_types, params);
+	case TA_AES_CMD_AUTHENC_INIT:
+		return auth_enc_op(session, param_types, params);
 	default:
 		EMSG("Command ID 0x%x is not supported", cmd);
 		return TEE_ERROR_NOT_SUPPORTED;
