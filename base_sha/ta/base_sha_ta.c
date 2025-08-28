@@ -3,10 +3,10 @@
  * Copyright (c) 2025, Advanced Micro Devices, Inc. All rights reserved.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
-#include <string.h>
-#include <stdio.h>
 
 #include <base_sha_ta.h>
 
@@ -25,29 +25,23 @@ void TA_DestroyEntryPoint(void)
 	/* TA destroyed */
 }
 
-TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
-				    TEE_Param params[4],
+TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
+				    TEE_Param __unused params[4],
 				    void **sess_ctx)
 {
-	struct base_sha *sess;
-
-	sess = TEE_Malloc(sizeof(*sess), 0);
+	struct base_sha *sess = TEE_Malloc(sizeof(*sess), 0);
 	if (!sess)
 		return TEE_ERROR_OUT_OF_MEMORY;
 
-	(void)param_types;
-	(void)params;
-
-	*sess_ctx = (void *)sess;
+	*sess_ctx = sess;
 	DMSG("Session %p: newly allocated", *sess_ctx);
 	return TEE_SUCCESS;
 }
 
 void TA_CloseSessionEntryPoint(void *sess_ctx)
 {
-	struct base_sha *sess;
+	struct base_sha *sess = sess_ctx;
 
-	sess = (struct base_sha *)sess_ctx;
 	/* release session */
 	TEE_Free(sess);
 }
@@ -96,6 +90,15 @@ static TEE_Result ta2tee_algo_id(uint32_t param, uint32_t *algo_id)
 static TEE_Result compute_digest(void *session, uint32_t param_types,
 				 TEE_Param params[4])
 {
+	struct base_sha *sess = NULL;
+	TEE_OperationHandle op;
+	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
+	void *msg = NULL;
+	size_t msg_len;
+	uint32_t digest_len;
+	uint32_t param;
+	void *b2 = NULL;
+
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
@@ -104,17 +107,13 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	struct base_sha *sess;
-	TEE_OperationHandle op;
-	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
-	void *msg = params[0].memref.buffer;
-	size_t msg_len = params[0].memref.size;
-	uint32_t digest_len = params[1].memref.size;
-	uint32_t param = params[2].value.a;
-	void *b2 = NULL;
+	msg = params[0].memref.buffer;
+	msg_len = params[0].memref.size;
+	digest_len = params[1].memref.size;
+	param = params[2].value.a;
 
 	DMSG("Session %p: get compute digest", session);
-	sess = (struct base_sha *)session;
+	sess = session;
 
 	if (params[1].memref.buffer && params[1].memref.size) {
 		b2 = TEE_Malloc(params[1].memref.size, 0);
