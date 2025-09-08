@@ -26,8 +26,17 @@ static void usage(int argc, char *argv[])
 	if (argc)
 		pname = argv[0];
 
-	fprintf(stderr, "%s: %s <key_size> <string to encrypt> <algo name>\n",
+	fprintf(stderr, "%s: %s <key_size> <string to encrypt> [<algo name>]\n",
 		__func__, pname);
+	printf("<key_size>:  key size in bits. Supported values are:\n");
+	printf("2048 bits, 3072 bits, 4096 bits\n");
+	printf("<algo_name>: algorithm name. Supported values are:\n");
+	printf("TA_ALG_PKCS1_V1_5 (default)\n");
+	printf("TA_ALG_OAEP_MGF1_SHA1\n");
+	printf("TA_ALG_OAEP_MGF1_SHA224\n");
+	printf("TA_ALG_OAEP_MGF1_SHA256\n");
+	printf("TA_ALG_OAEP_MGF1_SHA384\n");
+	printf("TA_ALG_OAEP_MGF1_SHA512\n");
 	exit(1);
 }
 
