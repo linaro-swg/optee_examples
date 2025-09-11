@@ -18,69 +18,6 @@ struct sha_hmac_algo {
 	TEE_ObjectHandle key_handle;	/* transient object to load the key */
 };
 
-/*
- * Few routines to convert IDs from TA API into IDs from OP-TEE.
- */
-static TEE_Result ta2tee_algo_id(uint32_t param, uint32_t *algo)
-{
-	switch (param) {
-	case TA_ALGO_HMAC_SHA256:
-		*algo = TEE_ALG_HMAC_SHA256;
-		return TEE_SUCCESS;
-	case TA_ALGO_HMAC_SHA1:
-		*algo = TEE_ALG_HMAC_SHA1;
-		return TEE_SUCCESS;
-	case TA_ALGO_HMAC_SHA224:
-		*algo = TEE_ALG_HMAC_SHA224;
-		return TEE_SUCCESS;
-	case TA_ALGO_HMAC_SHA384:
-		*algo = TEE_ALG_HMAC_SHA384;
-		return TEE_SUCCESS;
-	case TA_ALGO_HMAC_SHA512:
-		*algo = TEE_ALG_HMAC_SHA512;
-		return TEE_SUCCESS;
-	case TA_ALG_AES_CMAC:
-		*algo = TEE_ALG_AES_CMAC;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA1:
-		*algo = TEE_ALG_SHA1;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA224:
-		*algo = TEE_ALG_SHA224;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA256:
-		*algo = TEE_ALG_SHA256;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA384:
-		*algo = TEE_ALG_SHA384;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA512:
-		*algo = TEE_ALG_SHA512;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA3_224:
-		*algo = TEE_ALG_SHA3_224;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA3_256:
-		*algo = TEE_ALG_SHA3_256;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA3_384:
-		*algo = TEE_ALG_SHA3_384;
-		return TEE_SUCCESS;
-	case TA_ALG_SHA3_512:
-		*algo = TEE_ALG_SHA3_512;
-		return TEE_SUCCESS;
-	case TA_ALG_SHAKE128:
-		*algo = TEE_ALG_SHAKE128;
-		return TEE_SUCCESS;
-	case TA_ALG_SHAKE256:
-		*algo = TEE_ALG_SHAKE256;
-		return TEE_SUCCESS;
-	default:
-		EMSG("Invalid algo %u", param);
-		return TEE_ERROR_BAD_PARAMETERS;
-	}
-}
-
 static TEE_Result ta2tee_obj_type(uint32_t param, uint32_t *tee_obj_type)
 {
 	switch (param) {
@@ -116,7 +53,6 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 	void *msg = NULL;
 	size_t msg_len;
 	uint32_t digest_len;
-	uint32_t param;
 	void *b2 = NULL;
 
 	const uint32_t exp_param_types =
@@ -130,7 +66,6 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 	msg = params[0].memref.buffer;
 	msg_len = params[0].memref.size;
 	digest_len = params[1].memref.size;
-	param = params[2].value.a;
 
 	DMSG("Session %p: get compute digest", session);
 	sess = session;
@@ -141,9 +76,7 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 			goto out;
 	}
 
-	res = ta2tee_algo_id(param, &sess->algo);
-	if (res != TEE_SUCCESS)
-		return res;
+	sess->algo = params[2].value.a;
 
 	res = TEE_AllocateOperation(&sess->op_handle,
 				    sess->algo,
@@ -200,9 +133,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	res = ta2tee_algo_id(params[0].value.a, &sess->algo);
-	if (res != TEE_SUCCESS)
-		return res;
+	sess->algo = params[0].value.a;
 
 	res = ta2tee_obj_type(params[2].value.a, &tee_obj_type);
 	if (res != TEE_SUCCESS)

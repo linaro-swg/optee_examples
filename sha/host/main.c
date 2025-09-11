@@ -56,23 +56,23 @@ static void usage(int argc, char *argv[])
 	fprintf(stderr, "%s: %s <string to encrypt> <algo name>\n",
 		__func__, pname);
 	printf("<algo_name>: algorithm name. Supported values are:\n");
-	printf("HMAC SHA1 - TA_ALGO_HMAC_SHA1\n");
-	printf("HMAC SHA224 - TA_ALGO_HMAC_SHA224\n");
-	printf("HMAC SHA256 - TA_ALGO_HMAC_SHA256\n");
-	printf("HMAC SHA384 - TA_ALGO_HMAC_SHA384\n");
-	printf("HMAC SHA512 - TA_ALGO_HMAC_SHA512\n");
-	printf("AES MAC - TA_ALG_AES_CMAC\n");
-	printf("SHA1 - TA_ALG_SHA1\n");
-	printf("SHA224 - TA_ALG_SHA224\n");
-	printf("SHA256 - TA_ALG_SHA256\n");
-	printf("SHA384 - TA_ALG_SHA384\n");
-	printf("SHA512 - TA_ALG_SHA512\n");
-	printf("SHA3_224 - TA_ALG_SHA3_224\n");
-	printf("SHA3_256 - TA_ALG_SHA3_256\n");
-	printf("SHA3_384 - TA_ALG_SHA3_384\n");
-	printf("SHA3_512 - TA_ALG_SHA3_512\n");
-	printf("SHAKE128 - TA_ALG_SHAKE128\n");
-	printf("SHAKE256 - TA_ALG_SHAKE256\n");
+	printf("TA_ALGO_HMAC_SHA1\n");
+	printf("TA_ALGO_HMAC_SHA224\n");
+	printf("TA_ALGO_HMAC_SHA256\n");
+	printf("TA_ALGO_HMAC_SHA384\n");
+	printf("TA_ALGO_HMAC_SHA512\n");
+	printf("TA_ALG_AES_CMAC\n");
+	printf("TA_ALG_SHA1\n");
+	printf("TA_ALG_SHA224\n");
+	printf("TA_ALG_SHA256\n");
+	printf("TA_ALG_SHA384\n");
+	printf("TA_ALG_SHA512\n");
+	printf("TA_ALG_SHA3_224\n");
+	printf("TA_ALG_SHA3_256\n");
+	printf("TA_ALG_SHA3_384\n");
+	printf("TA_ALG_SHA3_512\n");
+	printf("TA_ALG_SHAKE128\n");
+	printf("TA_ALG_SHAKE256\n");
 	exit(1);
 }
 
@@ -242,67 +242,67 @@ int main(int argc, char *argv[])
 		algo = argv[2];
 		printf("%s algo selected\n", algo);
 		if (strcmp(algo, "TA_ALGO_HMAC_SHA256") == 0) {
-			ctx.algo_num = TA_ALGO_HMAC_SHA256;
+			ctx.algo_num = TEE_ALG_HMAC_SHA256;
 			obj_type = TA_TYPE_HMAC_SHA256;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA1") == 0) {
-			ctx.algo_num = TA_ALGO_HMAC_SHA1;
+			ctx.algo_num = TEE_ALG_HMAC_SHA1;
 			obj_type = TA_TYPE_HMAC_SHA1;
 			key_size = 64; /* 64 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA224") == 0) {
-			ctx.algo_num = TA_ALGO_HMAC_SHA224;
+			ctx.algo_num = TEE_ALG_HMAC_SHA224;
 			obj_type = TA_TYPE_HMAC_SHA224;
 			key_size = 64; /* 64 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA384") == 0) {
-			ctx.algo_num = TA_ALGO_HMAC_SHA384;
+			ctx.algo_num = TEE_ALG_HMAC_SHA384;
 			obj_type = TA_TYPE_HMAC_SHA384;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA512") == 0) {
-			ctx.algo_num = TA_ALGO_HMAC_SHA512;
+			ctx.algo_num = TEE_ALG_HMAC_SHA512;
 			obj_type = TA_TYPE_HMAC_SHA512;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALG_AES_CMAC") == 0) {
-			ctx.algo_num = TA_ALG_AES_CMAC;
+			ctx.algo_num = TEE_ALG_AES_CMAC;
 			obj_type = TA_TYPE_AES;
 			key_size = 16; /* 16 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALG_SHA1") == 0) {
-			ctx.algo_num = TA_ALG_SHA1;
+			ctx.algo_num = TEE_ALG_SHA1;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA224") == 0) {
-			ctx.algo_num = TA_ALG_SHA224;
+			ctx.algo_num = TEE_ALG_SHA224;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA256") == 0) {
-			ctx.algo_num = TA_ALG_SHA256;
+			ctx.algo_num = TEE_ALG_SHA256;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA384") == 0) {
-			ctx.algo_num = TA_ALG_SHA384;
+			ctx.algo_num = TEE_ALG_SHA384;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA512") == 0) {
-			ctx.algo_num = TA_ALG_SHA512;
+			ctx.algo_num = TEE_ALG_SHA512;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA3_224") == 0) {
-			ctx.algo_num = TA_ALG_SHA3_224;
+			ctx.algo_num = TEE_ALG_SHA3_224;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA3_256") == 0) {
-			ctx.algo_num = TA_ALG_SHA3_256;
+			ctx.algo_num = TEE_ALG_SHA3_256;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA3_384") == 0) {
-			ctx.algo_num = TA_ALG_SHA3_384;
+			ctx.algo_num = TEE_ALG_SHA3_384;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHA3_512") == 0) {
-			ctx.algo_num = TA_ALG_SHA3_512;
+			ctx.algo_num = TEE_ALG_SHA3_512;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHAKE128") == 0) {
-			ctx.algo_num = TA_ALG_SHAKE128;
+			ctx.algo_num = TEE_ALG_SHAKE128;
 			algo_type = BASE_SHA;
 		} else if (strcmp(algo, "TA_ALG_SHAKE256") == 0) {
-			ctx.algo_num = TA_ALG_SHAKE256;
+			ctx.algo_num = TEE_ALG_SHAKE256;
 			algo_type = BASE_SHA;
 		} else {
 			printf("%s algo is invalid\n", algo);
@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 		}
 	} else {
 		printf("TA_ALGO_HMAC_SHA256 algo selected\n");
-		ctx.algo_num = TA_ALGO_HMAC_SHA256;
+		ctx.algo_num = TEE_ALG_HMAC_SHA256;
 		obj_type = TA_TYPE_HMAC_SHA256;
 		key_size = 128; /* 128 bytes */
 		algo_type = SHA_HMAC;

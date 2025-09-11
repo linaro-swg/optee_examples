@@ -21,23 +21,23 @@
 #define TA_SHA_CMD_PREPARE		0
 
 /* SHA Algo */
-#define TA_ALGO_HMAC_SHA256		0
-#define TA_ALGO_HMAC_SHA1		1
-#define TA_ALGO_HMAC_SHA224		2
-#define TA_ALGO_HMAC_SHA384		3
-#define TA_ALGO_HMAC_SHA512		4
-#define TA_ALG_AES_CMAC			5
-#define TA_ALG_SHA1			6
-#define TA_ALG_SHA224			7
-#define TA_ALG_SHA256			8
-#define TA_ALG_SHA384			9
-#define TA_ALG_SHA512			10
-#define TA_ALG_SHA3_224			11
-#define TA_ALG_SHA3_256			12
-#define TA_ALG_SHA3_384			13
-#define TA_ALG_SHA3_512			14
-#define TA_ALG_SHAKE128			15
-#define TA_ALG_SHAKE256			16
+#define TEE_ALG_SHA1			0x50000002
+#define TEE_ALG_SHA224                  0x50000003
+#define TEE_ALG_SHA256                  0x50000004
+#define TEE_ALG_SHA384                  0x50000005
+#define TEE_ALG_SHA512                  0x50000006
+#define TEE_ALG_SHA3_224                0x50000008
+#define TEE_ALG_SHA3_256                0x50000009
+#define TEE_ALG_SHA3_384                0x5000000A
+#define TEE_ALG_SHA3_512                0x5000000B
+#define TEE_ALG_HMAC_SHA1               0x30000002
+#define TEE_ALG_HMAC_SHA224             0x30000003
+#define TEE_ALG_HMAC_SHA256             0x30000004
+#define TEE_ALG_HMAC_SHA384             0x30000005
+#define TEE_ALG_HMAC_SHA512             0x30000006
+#define TEE_ALG_SHAKE128                0x50000101
+#define TEE_ALG_SHAKE256                0x50000102
+#define TEE_ALG_AES_CMAC                0x30000610
 
 /* Object types */
 #define TA_TYPE_HMAC_SHA256		0
