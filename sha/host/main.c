@@ -5,8 +5,8 @@
 
 #include <err.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
@@ -55,35 +55,34 @@ static void usage(int argc, char *argv[])
 
 	fprintf(stderr, "%s: %s <string to encrypt> <algo name>\n",
 		__func__, pname);
-	printf("<algo_name>: algorithm name. Supported values are:\n");
-	printf("TA_ALGO_HMAC_SHA1\n");
-	printf("TA_ALGO_HMAC_SHA224\n");
-	printf("TA_ALGO_HMAC_SHA256\n");
-	printf("TA_ALGO_HMAC_SHA384\n");
-	printf("TA_ALGO_HMAC_SHA512\n");
-	printf("TA_ALG_AES_CMAC\n");
-	printf("TA_ALG_SHA1\n");
-	printf("TA_ALG_SHA224\n");
-	printf("TA_ALG_SHA256\n");
-	printf("TA_ALG_SHA384\n");
-	printf("TA_ALG_SHA512\n");
-	printf("TA_ALG_SHA3_224\n");
-	printf("TA_ALG_SHA3_256\n");
-	printf("TA_ALG_SHA3_384\n");
-	printf("TA_ALG_SHA3_512\n");
-	printf("TA_ALG_SHAKE128\n");
-	printf("TA_ALG_SHAKE256\n");
+	fprintf(stderr, "<algo_name>: algorithm name. Supported values are:\n");
+	fprintf(stderr, "TA_ALGO_HMAC_SHA1\n");
+	fprintf(stderr, "TA_ALGO_HMAC_SHA224\n");
+	fprintf(stderr, "TA_ALGO_HMAC_SHA256\n");
+	fprintf(stderr, "TA_ALGO_HMAC_SHA384\n");
+	fprintf(stderr, "TA_ALGO_HMAC_SHA512\n");
+	fprintf(stderr, "TA_ALG_AES_CMAC\n");
+	fprintf(stderr, "TA_ALG_SHA1\n");
+	fprintf(stderr, "TA_ALG_SHA224\n");
+	fprintf(stderr, "TA_ALG_SHA256\n");
+	fprintf(stderr, "TA_ALG_SHA384\n");
+	fprintf(stderr, "TA_ALG_SHA512\n");
+	fprintf(stderr, "TA_ALG_SHA3_224\n");
+	fprintf(stderr, "TA_ALG_SHA3_256\n");
+	fprintf(stderr, "TA_ALG_SHA3_384\n");
+	fprintf(stderr, "TA_ALG_SHA3_512\n");
+	fprintf(stderr, "TA_ALG_SHAKE128\n");
+	fprintf(stderr, "TA_ALG_SHAKE256\n");
 	exit(1);
 }
 
 void compute_digest(struct test_ctx *ctx, void *message, size_t msg_len,
 		    void *digest, size_t *digest_len)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_MEMREF_TEMP_OUTPUT,
 					 TEEC_VALUE_INPUT,
@@ -97,9 +96,10 @@ void compute_digest(struct test_ctx *ctx, void *message, size_t msg_len,
 
 	res = TEEC_InvokeCommand(&ctx->sess, CMD_COMPUTE_DIGEST, &op,
 				 &origin);
-	if (res == TEEC_SUCCESS) {
-		*digest_len = op.params[1].tmpref.size;
-	} else {
+
+	*digest_len = op.params[1].tmpref.size;
+
+	if (res != TEEC_SUCCESS) {
 		errx(1, "TEEC_InvokeCommand(COMPUTE DIGEST) failed 0x%x origin 0x%x",
 		     res, origin);
 	}
@@ -107,11 +107,10 @@ void compute_digest(struct test_ctx *ctx, void *message, size_t msg_len,
 
 void prepare_hmac_sha(struct test_ctx *ctx, size_t key_size, uint32_t obj_type)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
 					 TEEC_VALUE_INPUT,
 					 TEEC_VALUE_INPUT,
@@ -130,11 +129,10 @@ void prepare_hmac_sha(struct test_ctx *ctx, size_t key_size, uint32_t obj_type)
 
 void set_key(struct test_ctx *ctx, char *key, size_t key_sz)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_NONE, TEEC_NONE, TEEC_NONE);
 
@@ -150,11 +148,10 @@ void set_key(struct test_ctx *ctx, char *key, size_t key_sz)
 
 void set_iv(struct test_ctx *ctx, char *iv, size_t iv_sz)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					  TEEC_NONE, TEEC_NONE, TEEC_NONE);
 	op.params[0].tmpref.buffer = iv;
@@ -170,11 +167,10 @@ void set_iv(struct test_ctx *ctx, char *iv, size_t iv_sz)
 void sha_update_ops(struct test_ctx *ctx, void *message, size_t message_sz,
 		    void *hmac_buff, size_t *hmac_sz)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_MEMREF_TEMP_OUTPUT,
 					 TEEC_NONE, TEEC_NONE);
@@ -186,21 +182,22 @@ void sha_update_ops(struct test_ctx *ctx, void *message, size_t message_sz,
 
 	res = TEEC_InvokeCommand(&ctx->sess, TA_CMD_SHA_INIT, &op,
 				 &origin);
-	if (res == TEEC_SUCCESS)
-		*hmac_sz = op.params[1].tmpref.size;
-	else
+
+	*hmac_sz = op.params[1].tmpref.size;
+
+	if (res != TEEC_SUCCESS) {
 		errx(1, "TEEC_InvokeCommand(SHA_OPS) failed 0x%x origin 0x%x",
 		     res, origin);
+	}
 }
 
 TEEC_Result compare_hmac_sha(struct test_ctx *ctx, void *message, size_t message_sz,
 		      void *hmac_buff, size_t *hmac_sz)
 {
-	TEEC_Operation op;
-	uint32_t origin;
-	TEEC_Result res;
+	TEEC_Operation op = {0};
+	uint32_t origin = 0;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	memset(&op, 0, sizeof(op));
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_NONE, TEEC_NONE);
@@ -218,18 +215,18 @@ TEEC_Result compare_hmac_sha(struct test_ctx *ctx, void *message, size_t message
 
 int main(int argc, char *argv[])
 {
-	struct test_ctx ctx;
-	size_t key_size;
-	void *message;
-	size_t message_sz;
-	char buff[64];
+	struct test_ctx ctx = {0};
+	size_t key_size = 128;
+	void *message = NULL;
+	size_t message_sz = 0;
+	char buff[64] = {0};
 	size_t buff_sz = sizeof(buff);
-	char *algo;
-	uint32_t obj_type;
-	uint32_t algo_type;
-	TEEC_Result res;
+	char *algo = NULL;
+	uint32_t obj_type = TA_TYPE_HMAC_SHA256;
+	uint32_t algo_type = SHA_HMAC;
+	TEEC_Result res = TEEC_ERROR_GENERIC;
 
-	if ((argc < 2) || (argc > 3)) {
+	if (argc < 2 || argc > 3) {
 		warnx("Unexpected number of arguments %d (expected 2)",
 		      argc - 1);
 		usage(argc, argv);
@@ -311,9 +308,6 @@ int main(int argc, char *argv[])
 	} else {
 		printf("TA_ALGO_HMAC_SHA256 algo selected\n");
 		ctx.algo_num = TEE_ALG_HMAC_SHA256;
-		obj_type = TA_TYPE_HMAC_SHA256;
-		key_size = 128; /* 128 bytes */
-		algo_type = SHA_HMAC;
 	}
 
 	printf("Prepare session with the TA\n");

@@ -51,8 +51,8 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 	struct sha_hmac_algo *sess = NULL;
 	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
 	void *msg = NULL;
-	size_t msg_len;
-	uint32_t digest_len;
+	size_t msg_len = 0;
+	uint32_t digest_len = 0;
 	void *b2 = NULL;
 
 	const uint32_t exp_param_types =
@@ -60,6 +60,7 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
 				TEE_PARAM_TYPE_VALUE_INPUT,
 				TEE_PARAM_TYPE_NONE);
+
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 
@@ -87,23 +88,10 @@ static TEE_Result compute_digest(void *session, uint32_t param_types,
 	TEE_DigestUpdate(sess->op_handle, msg, msg_len);
 
 	res = TEE_DigestDoFinal(sess->op_handle, NULL, 0, b2, &digest_len);
-	if (res == TEE_SUCCESS) {
-		if (b2) {
-			TEE_MemMove(params[1].memref.buffer, b2,
-				    digest_len);
-		} else {
-			EMSG("Digest not genrated");
-			res = TEE_ERROR_SHORT_BUFFER;
-			goto out;
-		}
-	} else {
-		EMSG("TEE_DigestDoFinal failed\n");
-		goto out;
-	}
+	if (res == TEE_SUCCESS)
+		TEE_MemMove(params[1].memref.buffer, b2, digest_len);
 
 	params[1].memref.size = digest_len;
-
-	DMSG("Created digest");
 
 out:
 	TEE_Free(b2);
@@ -114,10 +102,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 				  TEE_Param params[4])
 {
 	struct sha_hmac_algo *sess = NULL;
-	TEE_Attribute attr;
-	TEE_Result res;
-	char *key;
-	uint32_t tee_obj_type;
+	TEE_Attribute attr = {0};
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *key = NULL;
+	uint32_t tee_obj_type = TEE_TYPE_HMAC_SHA256;
 
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
@@ -153,7 +141,6 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 				    sess->key_size * 8);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to allocate operation");
-		sess->op_handle = TEE_HANDLE_NULL;
 		goto err;
 	}
 
@@ -167,7 +154,6 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 					  &sess->key_handle);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to allocate transient object");
-		sess->key_handle = TEE_HANDLE_NULL;
 		goto err;
 	}
 
@@ -182,17 +168,17 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	res = TEE_PopulateTransientObject(sess->key_handle, &attr, 1);
 	TEE_Free(key);
 	if (res != TEE_SUCCESS) {
-		EMSG("TEE_PopulateTransientObject failed, %x", res);
+		EMSG("TEE_PopulateTransientObject failed, %#"PRIx32, res);
 		goto err;
 	}
 
 	res = TEE_SetOperationKey(sess->op_handle, sess->key_handle);
 	if (res != TEE_SUCCESS) {
-		EMSG("TEE_SetOperationKey failed %x", res);
+		EMSG("TEE_SetOperationKey failed %#"PRIx32, res);
 		goto err;
 	}
 
-	return res;
+	return TEE_SUCCESS;
 
 err:
 	if (sess->op_handle != TEE_HANDLE_NULL)
@@ -213,10 +199,10 @@ static TEE_Result set_sha_key(void *session, uint32_t param_types,
 				TEE_Param params[4])
 {
 	struct sha_hmac_algo *sess = NULL;
-	TEE_Attribute attr;
-	TEE_Result res;
-	uint32_t key_sz;
-	char *key;
+	TEE_Attribute attr = {0};
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t key_sz = 0;
+	char *key = NULL;
 
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -263,14 +249,14 @@ static TEE_Result set_sha_key(void *session, uint32_t param_types,
 	TEE_ResetTransientObject(sess->key_handle);
 	res = TEE_PopulateTransientObject(sess->key_handle, &attr, 1);
 	if (res != TEE_SUCCESS) {
-		EMSG("TEE_PopulateTransientObject failed, %x", res);
+		EMSG("TEE_PopulateTransientObject failed, %#"PRIx32, res);
 		return res;
 	}
 
 	TEE_ResetOperation(sess->op_handle);
 	res = TEE_SetOperationKey(sess->op_handle, sess->key_handle);
 	if (res != TEE_SUCCESS) {
-		EMSG("TEE_SetOperationKey failed %x", res);
+		EMSG("TEE_SetOperationKey failed %#"PRIx32, res);
 		return res;
 	}
 
@@ -284,8 +270,8 @@ static TEE_Result reset_sha_iv(void *session, uint32_t param_types,
 				TEE_Param params[4])
 {
 	struct sha_hmac_algo *sess = NULL;
-	size_t iv_sz;
-	char *iv;
+	size_t iv_sz = 0;
+	char *iv = NULL;
 
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -318,8 +304,8 @@ static TEE_Result sha_update_op(void *session, uint32_t param_types,
 	struct sha_hmac_algo *sess = NULL;
 	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
 	void *message = NULL;
-	size_t message_sz;
-	uint32_t hmac_len;
+	size_t message_sz = 0;
+	uint32_t hmac_len = 0;
 	void *b2 = NULL;
 
 	const uint32_t exp_param_types =
@@ -349,13 +335,10 @@ static TEE_Result sha_update_op(void *session, uint32_t param_types,
 	res = TEE_MACComputeFinal(sess->op_handle, message, message_sz,
 				  b2, &hmac_len);
 
-	if (res == TEE_SUCCESS) {
-		if (b2) {
-			TEE_MemMove(params[1].memref.buffer, b2,
-				    hmac_len);
-		}
-		params[1].memref.size = hmac_len;
-	}
+	if (res == TEE_SUCCESS)
+		TEE_MemMove(params[1].memref.buffer, b2, hmac_len);
+
+	params[1].memref.size = hmac_len;
 
 out:
 	TEE_Free(b2);
@@ -366,11 +349,10 @@ static TEE_Result compare_hmac_sha_algo(void *session, uint32_t param_types,
 					TEE_Param params[4])
 {
 	struct sha_hmac_algo *sess = NULL;
-	TEE_Result res;
 	void *message = NULL;
-	size_t message_sz;
+	size_t message_sz = 0;
 	void *hmac_buff = NULL;
-	uint32_t hmac_len;
+	uint32_t hmac_len = 0;
 
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -390,10 +372,9 @@ static TEE_Result compare_hmac_sha_algo(void *session, uint32_t param_types,
 	hmac_len = (uint32_t)params[1].memref.size;
 
 	TEE_MACUpdate(sess->op_handle, message, message_sz);
-	res = TEE_MACCompareFinal(sess->op_handle, message, message_sz,
-				  hmac_buff, hmac_len);
 
-	return res;
+	return TEE_MACCompareFinal(sess->op_handle, message, message_sz,
+				   hmac_buff, hmac_len);
 }
 
 TEE_Result TA_CreateEntryPoint(void)
@@ -463,7 +444,7 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session,
 	case CMD_COMPUTE_DIGEST:
 		return compute_digest(session, param_types, params);
 	default:
-		EMSG("Command ID 0x%x is not supported", cmd);
+		EMSG("Command ID 0x%"PRIx32" is not supported", cmd);
 		return TEE_ERROR_NOT_SUPPORTED;
 	}
 }
