@@ -231,7 +231,6 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 void TA_CloseSessionEntryPoint(void *sess_ctx)
 {
 	TEE_Free(sess_ctx);
-	sess_ctx = NULL;
 }
 
 TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx,
