@@ -16,9 +16,9 @@ struct acipher {
 static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 			      TEE_Param params[TEE_NUM_PARAMS])
 {
-	TEE_Result res;
-	uint32_t key_size;
-	TEE_ObjectHandle key;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t key_size = 0;
+	TEE_ObjectHandle key = TEE_HANDLE_NULL;
 	const uint32_t key_type = TEE_TYPE_RSA_KEYPAIR;
 	const uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
 						TEE_PARAM_TYPE_NONE,
@@ -52,13 +52,13 @@ static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 			  TEE_Param params[TEE_NUM_PARAMS])
 {
-	TEE_Result res;
-	const void *inbuf;
-	uint32_t inbuf_len;
-	void *outbuf;
-	uint32_t outbuf_len;
-	TEE_OperationHandle op;
-	TEE_ObjectInfo key_info;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	const void *inbuf = NULL;
+	uint32_t inbuf_len = 0;
+	void *outbuf = NULL;
+	uint32_t outbuf_len = 0;
+	TEE_OperationHandle op = TEE_HANDLE_NULL;
+	TEE_ObjectInfo key_info = { };
 	const uint32_t alg = TEE_ALG_RSAES_PKCS1_V1_5;
 	const uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 						TEE_PARAM_TYPE_MEMREF_OUTPUT,
@@ -122,7 +122,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 					TEE_Param __unused params[4],
 					void **session)
 {
-	struct acipher *state;
+	struct acipher *state = NULL;
 
 	/*
 	 * Allocate and init state for the session.

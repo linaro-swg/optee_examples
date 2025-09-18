@@ -162,10 +162,10 @@ static TEE_Result get_hotp(struct hotp_key *state,
 					uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
-	uint32_t hotp_val;
+	uint32_t hotp_val = 0;
 	uint8_t mac[SHA1_HASH_SIZE];
 	uint32_t mac_len = sizeof(mac);
-	int i;
+	int i = 0;
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_OUTPUT,
 						   TEE_PARAM_TYPE_NONE,
