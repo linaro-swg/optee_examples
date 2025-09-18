@@ -106,11 +106,9 @@ static TEE_Result hmac_sha1(const uint8_t *key, const size_t keylen,
 	TEE_MACInit(op_handle, NULL, 0);
 	TEE_MACUpdate(op_handle, in, inlen);
 	res = TEE_MACComputeFinal(op_handle, NULL, 0, out, outlen);
-exit:
-	if (op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(op_handle);
 
-	/* It is OK to call this when key_handle is TEE_HANDLE_NULL */
+exit:
+	TEE_FreeOperation(op_handle);
 	TEE_FreeTransientObject(key_handle);
 
 	return res;
