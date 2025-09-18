@@ -14,7 +14,7 @@
 
 #define TA_UUID				TA_ACIPHER_UUID
 
-#define TA_FLAGS			TA_FLAG_EXEC_DDR
+#define TA_FLAGS			0
 
 /* Provisioned stack size */
 #define TA_STACK_SIZE			(2 * 1024)

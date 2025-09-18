@@ -37,11 +37,8 @@
 
 #define TA_UUID				TA_RANDOM_UUID
 
-/*
- * TA properties: multi-instance TA, no specific attribute
- * TA_FLAG_EXEC_DDR is meaningless but mandated.
- */
-#define TA_FLAGS			TA_FLAG_EXEC_DDR
+/* TA properties: multi-instance TA, no specific attribute */
+#define TA_FLAGS			0
 
 /* Provisioned stack size */
 #define TA_STACK_SIZE			(2 * 1024)
