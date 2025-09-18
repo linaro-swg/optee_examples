@@ -77,8 +77,8 @@ int main(void)
 
 	fprintf(stdout, "Register the shared key: ");
 	for (i = 0; i < sizeof(K); i++) {
-        	fprintf(stdout, "%02x ", K[i]);
-    	}
+		fprintf(stdout, "%02x ", K[i]);
+	}
 	fprintf(stdout, "\n");
 
 	res = TEEC_InvokeCommand(&sess, TA_HOTP_CMD_REGISTER_SHARED_KEY,
