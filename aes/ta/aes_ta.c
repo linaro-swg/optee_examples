@@ -133,8 +133,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	 */
 
 	/* Free potential previous operation */
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeOperation(sess->op_handle);
 
 	/* Allocate operation: AES/CTR, mode and size from params */
 	res = TEE_AllocateOperation(&sess->op_handle,
@@ -148,8 +147,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	}
 
 	/* Free potential previous transient object */
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeTransientObject(sess->key_handle);
 
 	/* Allocate transient object according to target key size */
 	res = TEE_AllocateTransientObject(TEE_TYPE_AES,
@@ -194,12 +192,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	return res;
 
 err:
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeOperation(sess->op_handle);
 	sess->op_handle = TEE_HANDLE_NULL;
 
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeTransientObject(sess->key_handle);
 	sess->key_handle = TEE_HANDLE_NULL;
 
 	return res;
@@ -490,11 +486,9 @@ void TA_CloseSessionEntryPoint(void *session)
 	DMSG("Session %p: release session", session);
 	sess = (struct aes_cipher *)session;
 
-	/* Release the session resources */
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	/* Release all remaining session resources */
+	TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeOperation(sess->op_handle);
 	TEE_Free(sess);
 }
 
