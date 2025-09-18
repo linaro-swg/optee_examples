@@ -36,7 +36,7 @@
 
 #define TA_UUID				TA_SECURE_STORAGE_UUID
 
-#define TA_FLAGS			(TA_FLAG_EXEC_DDR | TA_FLAG_SINGLE_INSTANCE)
+#define TA_FLAGS			TA_FLAG_SINGLE_INSTANCE
 
 /* Provisioned stack size */
 #define TA_STACK_SIZE			(2 * 1024)
