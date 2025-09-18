@@ -162,6 +162,11 @@ static TEE_Result sign_verify(uint32_t param_types,
 	uint32_t sig_alg = 0;
 	uint32_t algo_num= 0;
 	uint32_t hash_alg = 0;
+	size_t msg_len = 0;
+	size_t out_len = 0;
+	size_t key_sz = 0;
+	void *msg = NULL;
+	void *out = NULL;
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -175,11 +180,11 @@ static TEE_Result sign_verify(uint32_t param_types,
 	if (hash_alg == 0)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	void *msg = params[0].memref.buffer;
-	size_t msg_len = params[0].memref.size;
-	void *out = params[1].memref.buffer;
-	size_t out_len = params[1].memref.size;
-	size_t key_sz = params[3].value.a;
+	msg = params[0].memref.buffer;
+	msg_len = params[0].memref.size;
+	out = params[1].memref.buffer;
+	out_len = params[1].memref.size;
+	key_sz = params[3].value.a;
 
 	/* Generate Key */
 	DMSG("Generate Key");
