@@ -121,10 +121,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_VALUE_INPUT,
 				TEE_PARAM_TYPE_VALUE_INPUT,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	TEE_Attribute attr;
-	TEE_Result res;
-	char *key;
+	struct aes_cipher *sess = NULL;
+	TEE_Attribute attr = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *key = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: get ciphering resources", session);
@@ -237,11 +237,11 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	TEE_Attribute attr;
-	TEE_Result res;
-	uint32_t key_sz;
-	char *key;
+	struct aes_cipher *sess = NULL;
+	TEE_Attribute attr = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t key_sz = 0;
+	char *key = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: load key material", session);
@@ -307,9 +307,9 @@ static TEE_Result reset_aes_iv(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	size_t iv_sz;
-	char *iv;
+	struct aes_cipher *sess = NULL;
+	size_t iv_sz = 0;
+	char *iv = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: reset initial vector", session);
@@ -341,7 +341,7 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: cipher buffer", session);
@@ -483,7 +483,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 					TEE_Param __unused params[4],
 					void __unused **session)
 {
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/*
 	 * Allocate and init ciphering materials for the session.
@@ -505,7 +505,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 
 void TA_CloseSessionEntryPoint(void *session)
 {
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: release session", session);
