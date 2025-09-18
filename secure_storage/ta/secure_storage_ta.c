@@ -37,10 +37,10 @@ static TEE_Result delete_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_Result res;
-	char *obj_id;
-	size_t obj_id_sz;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
 
 	/*
 	 * Safely get the invocation parameters
@@ -82,13 +82,13 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_Result res;
-	char *obj_id;
-	size_t obj_id_sz;
-	char *data;
-	size_t data_sz;
-	uint32_t obj_data_flag;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
+	char *data = NULL;
+	size_t data_sz = 0;
+	uint32_t obj_data_flag = 0;
 
 	/*
 	 * Safely get the invocation parameters
@@ -151,14 +151,14 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_ObjectInfo object_info;
-	TEE_Result res;
-	uint32_t read_bytes;
-	char *obj_id;
-	size_t obj_id_sz;
-	char *data;
-	size_t data_sz;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_ObjectInfo object_info = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t read_bytes = 0;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
+	char *data = NULL;
+	size_t data_sz = 0;
 
 	/*
 	 * Safely get the invocation parameters
