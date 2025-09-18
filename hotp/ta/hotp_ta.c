@@ -131,8 +131,8 @@ static void truncate(uint8_t *hmac_result, uint32_t *bin_code)
 	*bin_code %= DBC2_MODULO;
 }
 
-static TEE_Result register_shared_key(struct hotp_key *state, 
-					uint32_t param_types, TEE_Param params[4])
+static TEE_Result register_shared_key(struct hotp_key *state,
+				      uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
 
@@ -158,8 +158,8 @@ static TEE_Result register_shared_key(struct hotp_key *state,
 	return res;
 }
 
-static TEE_Result get_hotp(struct hotp_key *state, 
-					uint32_t param_types, TEE_Param params[4])
+static TEE_Result get_hotp(struct hotp_key *state, uint32_t param_types,
+			   TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
 	uint32_t hotp_val = 0;
@@ -177,7 +177,7 @@ static TEE_Result get_hotp(struct hotp_key *state,
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	res = hmac_sha1(state->K, state->K_len, state->counter, 
+	res = hmac_sha1(state->K, state->K_len, state->counter,
 			sizeof(state->counter), mac, &mac_len);
 
 	/* Increment the counter. */
