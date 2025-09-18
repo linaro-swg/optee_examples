@@ -230,7 +230,7 @@ err:
  * Process command TA_AES_CMD_SET_KEY. API in aes_ta.h
  */
 static TEE_Result set_aes_key(void *session, uint32_t param_types,
-				TEE_Param params[4])
+			      TEE_Param params[4])
 {
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -300,7 +300,7 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
  * Process command TA_AES_CMD_SET_IV. API in aes_ta.h
  */
 static TEE_Result reset_aes_iv(void *session, uint32_t param_types,
-				TEE_Param params[4])
+			       TEE_Param params[4])
 {
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -480,8 +480,8 @@ void TA_DestroyEntryPoint(void)
 }
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
-					TEE_Param __unused params[4],
-					void __unused **session)
+				    TEE_Param __unused params[4],
+				    void __unused **session)
 {
 	struct aes_cipher *sess = NULL;
 

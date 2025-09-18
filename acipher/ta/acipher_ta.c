@@ -119,8 +119,8 @@ void TA_DestroyEntryPoint(void)
 }
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
-					TEE_Param __unused params[4],
-					void **session)
+				    TEE_Param __unused params[4],
+				    void **session)
 {
 	struct acipher *state = NULL;
 
