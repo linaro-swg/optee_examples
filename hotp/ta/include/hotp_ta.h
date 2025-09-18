@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2017, Linaro Limited
  * All rights reserved.
- *
- * SPDX-License-Identifier: BSD-2-Clause
  */
 #ifndef __HOTP_TA_H__
 #define __HOTP_TA_H__
