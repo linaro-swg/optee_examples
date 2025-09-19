@@ -30,23 +30,23 @@ static uint32_t curve_bits(uint32_t curve_id)
 static uint32_t select_curve(uint32_t curve_id)
 {
 	switch (curve_id) {
-	case TA_ECC_CURVE_NIST_P192:
+	case TA_ECDH_ECC_CURVE_NIST_P192:
 		return TEE_ECC_CURVE_NIST_P192;
-	case TA_ECC_CURVE_NIST_P224:
+	case TA_ECDH_ECC_CURVE_NIST_P224:
 		return TEE_ECC_CURVE_NIST_P224;
-	case TA_ECC_CURVE_NIST_P256:
+	case TA_ECDH_ECC_CURVE_NIST_P256:
 		return TEE_ECC_CURVE_NIST_P256;
-	case TA_ECC_CURVE_NIST_P384:
+	case TA_ECDH_ECC_CURVE_NIST_P384:
 		return TEE_ECC_CURVE_NIST_P384;
 	default:
-		return 0;
+		return TEE_CRYPTO_ELEMENT_NONE;
 	}
 
 }
 
 static TEE_Result gen_ec_keypair(TEE_ObjectHandle *key, uint32_t curve)
 {
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 	uint32_t bits = curve_bits(curve);
 	TEE_Attribute attrs[1];
 
@@ -58,15 +58,14 @@ static TEE_Result gen_ec_keypair(TEE_ObjectHandle *key, uint32_t curve)
 		return res;
 
 	TEE_InitValueAttribute(&attrs[0], TEE_ATTR_ECC_CURVE, curve, 0);
-	res = TEE_GenerateKey(*key, bits, attrs, 1);
-	return res;
+	return TEE_GenerateKey(*key, bits, attrs, 1);
 }
 
 static TEE_Result get_pub_xy(TEE_ObjectHandle key,
 			     uint8_t *x, uint32_t *x_len,
 			     uint8_t *y, uint32_t *y_len)
 {
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 
 	res = TEE_GetObjectBufferAttribute(key, TEE_ATTR_ECC_PUBLIC_VALUE_X,
 					   x, x_len);
@@ -78,12 +77,12 @@ static TEE_Result get_pub_xy(TEE_ObjectHandle key,
 }
 
 static TEE_Result derive_secret(TEE_ObjectHandle my_key,
-				const uint8_t *peer_x, uint32_t peer_x_len,
-				const uint8_t *peer_y, uint32_t peer_y_len,
+				uint8_t *peer_x, uint32_t peer_x_len,
+				uint8_t *peer_y, uint32_t peer_y_len,
 				uint8_t *secret, uint32_t *secret_len,
 				uint32_t curve)
 {
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 	uint32_t bits = curve_bits(curve);
 	TEE_OperationHandle op = TEE_HANDLE_NULL;
 	TEE_ObjectHandle derived = TEE_HANDLE_NULL;
@@ -104,9 +103,9 @@ static TEE_Result derive_secret(TEE_ObjectHandle my_key,
 
 	/* Provide peer public coordinates as derivation parameters */
 	TEE_InitRefAttribute(&params[0], TEE_ATTR_ECC_PUBLIC_VALUE_X,
-			     (void *)peer_x, peer_x_len);
+			     peer_x, peer_x_len);
 	TEE_InitRefAttribute(&params[1], TEE_ATTR_ECC_PUBLIC_VALUE_Y,
-			     (void *)peer_y, peer_y_len);
+			     peer_y, peer_y_len);
 
 	/* Derived secret goes into a GENERIC_SECRET transient object */
 	res = TEE_AllocateTransientObject(TEE_TYPE_GENERIC_SECRET, bits, &derived);
@@ -142,41 +141,44 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 	uint32_t curve_ta = params[0].value.a;
 	uint32_t curve = select_curve(curve_ta);
 	uint32_t bits = curve_bits(curve);
+	uint8_t Ax[ECDH_BUF_BYTES] = {0};
+	uint8_t Ay[ECDH_BUF_BYTES] = {0};
+	uint8_t Bx[ECDH_BUF_BYTES] = {0};
+	uint8_t By[ECDH_BUF_BYTES] = {0};
+	uint32_t Ax_len = ECDH_BUF_BYTES;
+	uint32_t Ay_len = ECDH_BUF_BYTES;
+	uint32_t Bx_len = ECDH_BUF_BYTES;
+	uint32_t By_len = ECDH_BUF_BYTES;
+	uint8_t Sa[ECDH_BUF_BYTES] = {0};
+	uint8_t Sb[ECDH_BUF_BYTES] = {0};
+	uint32_t Sa_len = ECDH_BUF_BYTES;
+	uint32_t Sb_len = ECDH_BUF_BYTES;
 
 	DMSG("curve = %u", curve);
 	DMSG("bits = %u", bits);
 
-	if (!bits)
+	if (!bits || curve == TEE_CRYPTO_ELEMENT_NONE)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	TEE_ObjectHandle keyA = TEE_HANDLE_NULL, keyB = TEE_HANDLE_NULL;
+	TEE_ObjectHandle key_a = TEE_HANDLE_NULL;
+	TEE_ObjectHandle key_b = TEE_HANDLE_NULL;
 
-	res = gen_ec_keypair(&keyA, curve);
+	res = gen_ec_keypair(&key_a, curve);
 	CHECK(res, "gen key A");
 
-	res = gen_ec_keypair(&keyB, curve);
+	res = gen_ec_keypair(&key_b, curve);
 	CHECK(res, "gen key B");
 
-	/* Export A.pub and B.pub */
-	uint8_t Ax[ECDH_BUF_BYTES] = {0}, Ay[ECDH_BUF_BYTES] = {0};
-	uint8_t Bx[ECDH_BUF_BYTES] = {0}, By[ECDH_BUF_BYTES] = {0};
-	uint32_t Ax_len = ECDH_BUF_BYTES, Ay_len = ECDH_BUF_BYTES;
-	uint32_t Bx_len = ECDH_BUF_BYTES, By_len = ECDH_BUF_BYTES;
-
-	res = get_pub_xy(keyA, Ax, &Ax_len, Ay, &Ay_len);
+	res = get_pub_xy(key_a, Ax, &Ax_len, Ay, &Ay_len);
 	CHECK(res, "get A pub");
 
-	res = get_pub_xy(keyB, Bx, &Bx_len, By, &By_len);
+	res = get_pub_xy(key_b, Bx, &Bx_len, By, &By_len);
 	CHECK(res, "get B pub");
 
-	/* Derive from A with B.pub and from B with A.pub */
-	uint8_t Sa[ECDH_BUF_BYTES] = {0}, Sb[ECDH_BUF_BYTES] = {0};
-	uint32_t Sa_len = ECDH_BUF_BYTES, Sb_len = ECDH_BUF_BYTES;
-
-	res = derive_secret(keyA, Bx, Bx_len, By, By_len, Sa, &Sa_len, curve);
+	res = derive_secret(key_a, Bx, Bx_len, By, By_len, Sa, &Sa_len, curve);
 	CHECK(res, "derive A");
 
-	res = derive_secret(keyB, Ax, Ax_len, Ay, Ay_len, Sb, &Sb_len, curve);
+	res = derive_secret(key_b, Ax, Ax_len, Ay, Ay_len, Sb, &Sb_len, curve);
 	CHECK(res, "derive B");
 
 	/* They must be identical in length and value */
@@ -199,24 +201,34 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 	res = TEE_SUCCESS;
 
 out:
-	if (keyA != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(keyA);
-	if (keyB != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(keyB);
+	if (key_a != TEE_HANDLE_NULL)
+		TEE_FreeTransientObject(key_a);
+	if (key_b != TEE_HANDLE_NULL)
+		TEE_FreeTransientObject(key_b);
 	return res;
 }
 
 /* TA entry points */
 
-TEE_Result TA_CreateEntryPoint(void) { return TEE_SUCCESS; }
-void TA_DestroyEntryPoint(void) {}
-
-TEE_Result TA_OpenSessionEntryPoint(uint32_t pt, TEE_Param params[4], void **ctx)
+TEE_Result TA_CreateEntryPoint(void)
 {
-	(void)pt; (void)params; (void)ctx;
 	return TEE_SUCCESS;
 }
-void TA_CloseSessionEntryPoint(void *ctx) { (void)ctx; }
+
+void TA_DestroyEntryPoint(void)
+{
+}
+
+TEE_Result TA_OpenSessionEntryPoint(uint32_t pt __unused,
+				    TEE_Param params[4] __unused,
+				    void **ctx __unused)
+{
+	return TEE_SUCCESS;
+}
+
+void TA_CloseSessionEntryPoint(void *ctx __unused)
+{
+}
 
 TEE_Result TA_InvokeCommandEntryPoint(void *ctx, uint32_t cmd_id,
 				      uint32_t param_types, TEE_Param params[4])
