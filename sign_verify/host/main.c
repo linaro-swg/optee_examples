@@ -59,7 +59,7 @@ static void get_args(int argc, char *argv[], size_t *key_size,
 	}
 
 	*key_size = ks;
-	printf("Key size: %lu\n", *key_size);
+	printf("Key size: %zu\n", *key_size);
 
 	if (argc > 2) {
 		algo = argv[2];
