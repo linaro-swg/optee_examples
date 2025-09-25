@@ -66,6 +66,12 @@ static TEE_Result ta2tee_algo_id(uint32_t param, uint32_t *algo)
 	case TA_AES_ALGO_CTR:
 		*algo = TEE_ALG_AES_CTR;
 		return TEE_SUCCESS;
+	case TA_AES_ALGO_CCM:
+		*algo = TEE_ALG_AES_CCM;
+		return TEE_SUCCESS;
+	case TA_AES_ALGO_GCM:
+		*algo = TEE_ALG_AES_GCM;
+		return TEE_SUCCESS;
 	default:
 		EMSG("Invalid algo %u", param);
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -362,6 +368,99 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 				params[1].memref.buffer, &params[1].memref.size);
 }
 
+static TEE_Result auth_enc_op(void *session, uint32_t param_types, TEE_Param params[4])
+{
+	const uint32_t expected_pt =
+		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+				TEE_PARAM_TYPE_MEMREF_OUTPUT,
+				TEE_PARAM_TYPE_VALUE_INPUT,
+				TEE_PARAM_TYPE_MEMREF_OUTPUT);
+
+	if (param_types != expected_pt)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	struct aes_cipher *sess = (struct aes_cipher *)session;
+	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
+	uint32_t tag_len = params[3].memref.size;
+	uint32_t out_len = params[1].memref.size;
+	void *in_buf = params[0].memref.buffer;
+	size_t in_sz = params[0].memref.size;
+	bool encrypt = (params[2].value.a != 0);
+	void *b2 = NULL;
+	void *b3 = NULL;
+
+	if (params[1].memref.buffer && params[1].memref.size) {
+		b2 = TEE_Malloc(params[1].memref.size, 0);
+		if (!b2)
+			goto out;
+	}
+
+	uint8_t nonce[12] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0A, 0x0B};
+	DMSG("Initializing an Authentication Encryption operation");
+
+	res = TEE_AEInit(sess->op_handle, nonce, sizeof(nonce),
+			 tag_len * 8, 0, in_sz);
+
+	if (res != TEE_SUCCESS)
+		return res;
+
+	if (encrypt) {
+		if (params[3].memref.buffer && params[3].memref.size) {
+			b3 = TEE_Malloc(params[3].memref.size, 0);
+			if (!b3)
+				goto out;
+		}
+		DMSG("AE Encryption");
+		res = TEE_AEEncryptFinal(sess->op_handle,
+					 in_buf, in_sz,
+					 b2, &out_len,
+					 b3, &tag_len);
+
+		if (res == TEE_SUCCESS) {
+			if (b2) {
+				TEE_MemMove(params[1].memref.buffer, b2,
+					    out_len);
+			}
+			if (b3) {
+				TEE_MemMove(params[3].memref.buffer, b3,
+					    tag_len);
+			}
+
+			params[1].memref.size = out_len;
+			params[3].memref.size = tag_len;
+		} else {
+			EMSG("TEE_AEEncryptFinal failed with %x\n", res);
+		}
+	} else {
+
+		DMSG("AE Decryption");
+		res = TEE_AEDecryptFinal(sess->op_handle,
+					 in_buf, in_sz,
+					 b2, &out_len,
+					 params[3].memref.buffer,
+					 tag_len);
+		if (res == TEE_SUCCESS) {
+
+			if (b2) {
+				TEE_MemMove(params[1].memref.buffer, b2,
+					    out_len);
+			}
+
+			params[1].memref.size = out_len;
+			params[3].memref.size = tag_len;
+		} else {
+			EMSG("TEE_AEDecryptFinal failed with %x\n", res);
+		}
+	}
+out:
+	TEE_Free(b2);
+	TEE_Free(b3);
+
+	return res;
+
+}
+
 TEE_Result TA_CreateEntryPoint(void)
 {
 	/* Nothing to do */
@@ -427,6 +526,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session,
 		return reset_aes_iv(session, param_types, params);
 	case TA_AES_CMD_CIPHER:
 		return cipher_buffer(session, param_types, params);
+	case TA_AES_CMD_AUTHENC_INIT:
+		return auth_enc_op(session, param_types, params);
 	default:
 		EMSG("Command ID 0x%x is not supported", cmd);
 		return TEE_ERROR_NOT_SUPPORTED;
