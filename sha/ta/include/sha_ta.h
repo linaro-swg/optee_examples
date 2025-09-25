@@ -40,16 +40,15 @@
 #define TEE_ALG_AES_CMAC                0x30000610
 
 /* Object types */
-#define TA_TYPE_HMAC_SHA256		0
-#define TA_TYPE_HMAC_SHA1		1
-#define TA_TYPE_HMAC_SHA224		2
-#define TA_TYPE_HMAC_SHA384		3
-#define TA_TYPE_HMAC_SHA512		4
-#define TA_TYPE_AES			5
+enum ta_sha_object_type {
+	TA_SHA_OBJ_TYPE_HMAC_SHA256 = 0,
+	TA_SHA_OBJ_TYPE_HMAC_SHA1,
+	TA_SHA_OBJ_TYPE_HMAC_SHA224,
+	TA_SHA_OBJ_TYPE_HMAC_SHA384,
+	TA_SHA_OBJ_TYPE_HMAC_SHA512,
+	TA_SHA_OBJ_TYPE_AES
 
-/* Algo Type */
-#define SHA_HMAC			0
-#define BASE_SHA			1
+};
 
 /*
  * TA_SHA_CMD_SET_KEY - Allocate resources for the SHA operation
@@ -76,7 +75,7 @@
  * param[2] unused
  * param[3] unused
  */
-#define TA_CMD_SHA_INIT			3
+#define TA_SHA_CMD_INIT			3
 
 /*
  * TA_CMD_SHA_CMPR - compare MAC
@@ -85,7 +84,7 @@
  * param[2] unused
  * param[3] unused
  */
-#define TA_CMD_SHA_CMPR			4
+#define TA_SHA_CMD_COMPARE_MAC		4
 
 /*
  * CMD_COMPUTE_DIGEST - Computing the digest
@@ -94,6 +93,6 @@
  * param[2] (value) a:TA_ALG_SHA*, b: unused
  * param[3] unused
  */
-#define CMD_COMPUTE_DIGEST		5
+#define TA_SHA_CMD_COMPUTE_DIGEST	5
 
 #endif /* __SHA_TA_H */

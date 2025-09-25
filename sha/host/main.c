@@ -14,6 +14,10 @@
 /* For the UUID (found in the TA's h-file(s)) */
 #include <sha_ta.h>
 
+/* Algo Type */
+#define SHA_HMAC	0
+#define BASE_SHA        1
+
 /* TEE resources */
 struct test_ctx {
 	TEEC_Context ctx;
@@ -94,7 +98,7 @@ void compute_digest(struct test_ctx *ctx, void *message, size_t msg_len,
 	op.params[1].tmpref.size = *digest_len;
 	op.params[2].value.a = ctx->algo_num;
 
-	res = TEEC_InvokeCommand(&ctx->sess, CMD_COMPUTE_DIGEST, &op,
+	res = TEEC_InvokeCommand(&ctx->sess, TA_SHA_CMD_COMPUTE_DIGEST, &op,
 				 &origin);
 
 	*digest_len = op.params[1].tmpref.size;
@@ -105,7 +109,8 @@ void compute_digest(struct test_ctx *ctx, void *message, size_t msg_len,
 	}
 }
 
-void prepare_hmac_sha(struct test_ctx *ctx, size_t key_size, uint32_t obj_type)
+void prepare_hmac_sha(struct test_ctx *ctx, size_t key_size,
+		      enum ta_sha_object_type obj_type)
 {
 	TEEC_Operation op = {0};
 	uint32_t origin = 0;
@@ -118,7 +123,7 @@ void prepare_hmac_sha(struct test_ctx *ctx, size_t key_size, uint32_t obj_type)
 
 	op.params[0].value.a = ctx->algo_num;
 	op.params[1].value.a = key_size;
-	op.params[2].value.a = obj_type;
+	op.params[2].value.a = (uint32_t)obj_type;
 
 	res = TEEC_InvokeCommand(&ctx->sess, TA_SHA_CMD_PREPARE,
 				 &op, &origin);
@@ -180,7 +185,7 @@ void sha_update_ops(struct test_ctx *ctx, void *message, size_t message_sz,
 	op.params[1].tmpref.buffer = hmac_buff;
 	op.params[1].tmpref.size = *hmac_sz;
 
-	res = TEEC_InvokeCommand(&ctx->sess, TA_CMD_SHA_INIT, &op,
+	res = TEEC_InvokeCommand(&ctx->sess, TA_SHA_CMD_INIT, &op,
 				 &origin);
 
 	*hmac_sz = op.params[1].tmpref.size;
@@ -196,7 +201,6 @@ TEEC_Result compare_hmac_sha(struct test_ctx *ctx, void *message, size_t message
 {
 	TEEC_Operation op = {0};
 	uint32_t origin = 0;
-	TEEC_Result res = TEEC_ERROR_GENERIC;
 
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
 					 TEEC_MEMREF_TEMP_INPUT,
@@ -207,23 +211,21 @@ TEEC_Result compare_hmac_sha(struct test_ctx *ctx, void *message, size_t message
 	op.params[1].tmpref.buffer = hmac_buff;
 	op.params[1].tmpref.size = *hmac_sz;
 
-	res = TEEC_InvokeCommand(&ctx->sess, TA_CMD_SHA_CMPR, &op,
-				 &origin);
-
-	return res;
+	return TEEC_InvokeCommand(&ctx->sess, TA_SHA_CMD_COMPARE_MAC, &op,
+				  &origin);
 }
 
 int main(int argc, char *argv[])
 {
 	struct test_ctx ctx = {0};
-	size_t key_size = 128;
+	size_t key_size;
 	void *message = NULL;
 	size_t message_sz = 0;
 	char buff[64] = {0};
 	size_t buff_sz = sizeof(buff);
 	char *algo = NULL;
-	uint32_t obj_type = TA_TYPE_HMAC_SHA256;
-	uint32_t algo_type = SHA_HMAC;
+	enum ta_sha_object_type obj_type;
+	uint32_t algo_type;
 	TEEC_Result res = TEEC_ERROR_GENERIC;
 
 	if (argc < 2 || argc > 3) {
@@ -240,32 +242,32 @@ int main(int argc, char *argv[])
 		printf("%s algo selected\n", algo);
 		if (strcmp(algo, "TA_ALGO_HMAC_SHA256") == 0) {
 			ctx.algo_num = TEE_ALG_HMAC_SHA256;
-			obj_type = TA_TYPE_HMAC_SHA256;
+			obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA256;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA1") == 0) {
 			ctx.algo_num = TEE_ALG_HMAC_SHA1;
-			obj_type = TA_TYPE_HMAC_SHA1;
+			obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA1;
 			key_size = 64; /* 64 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA224") == 0) {
 			ctx.algo_num = TEE_ALG_HMAC_SHA224;
-			obj_type = TA_TYPE_HMAC_SHA224;
+			obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA224;
 			key_size = 64; /* 64 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA384") == 0) {
 			ctx.algo_num = TEE_ALG_HMAC_SHA384;
-			obj_type = TA_TYPE_HMAC_SHA384;
+			obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA384;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALGO_HMAC_SHA512") == 0) {
 			ctx.algo_num = TEE_ALG_HMAC_SHA512;
-			obj_type = TA_TYPE_HMAC_SHA512;
+			obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA512;
 			key_size = 128; /* 128 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALG_AES_CMAC") == 0) {
 			ctx.algo_num = TEE_ALG_AES_CMAC;
-			obj_type = TA_TYPE_AES;
+			obj_type = TA_SHA_OBJ_TYPE_AES;
 			key_size = 16; /* 16 bytes */
 			algo_type = SHA_HMAC;
 		} else if (strcmp(algo, "TA_ALG_SHA1") == 0) {
@@ -308,6 +310,9 @@ int main(int argc, char *argv[])
 	} else {
 		printf("TA_ALGO_HMAC_SHA256 algo selected\n");
 		ctx.algo_num = TEE_ALG_HMAC_SHA256;
+		key_size = 128; /* 128 bytes */
+		obj_type = TA_SHA_OBJ_TYPE_HMAC_SHA256;
+		algo_type = SHA_HMAC;
 	}
 
 	printf("Prepare session with the TA\n");

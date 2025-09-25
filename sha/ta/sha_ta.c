@@ -20,23 +20,25 @@ struct sha_hmac_algo {
 
 static TEE_Result ta2tee_obj_type(uint32_t param, uint32_t *tee_obj_type)
 {
-	switch (param) {
-	case TA_TYPE_HMAC_SHA256:
+	enum ta_sha_object_type obj_type = (enum ta_sha_object_type)param;
+
+	switch (obj_type) {
+	case TA_SHA_OBJ_TYPE_HMAC_SHA256:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA256;
 		return TEE_SUCCESS;
-	case TA_TYPE_HMAC_SHA1:
+	case TA_SHA_OBJ_TYPE_HMAC_SHA1:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA1;
 		return TEE_SUCCESS;
-	case TA_TYPE_HMAC_SHA224:
+	case TA_SHA_OBJ_TYPE_HMAC_SHA224:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA224;
 		return TEE_SUCCESS;
-	case TA_TYPE_HMAC_SHA384:
+	case TA_SHA_OBJ_TYPE_HMAC_SHA384:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA384;
 		return TEE_SUCCESS;
-	case TA_TYPE_HMAC_SHA512:
+	case TA_SHA_OBJ_TYPE_HMAC_SHA512:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA512;
 		return TEE_SUCCESS;
-	case TA_TYPE_AES:
+	case TA_SHA_OBJ_TYPE_AES:
 		*tee_obj_type = TEE_TYPE_AES;
 		return TEE_SUCCESS;
 	default:
@@ -181,12 +183,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	return TEE_SUCCESS;
 
 err:
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeOperation(sess->op_handle);
 	sess->op_handle = TEE_HANDLE_NULL;
 
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeTransientObject(sess->key_handle);
 	sess->key_handle = TEE_HANDLE_NULL;
 
 	return res;
@@ -213,6 +213,12 @@ static TEE_Result set_sha_key(void *session, uint32_t param_types,
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: load key material", session);
 	sess = session;
+
+	if (sess->key_handle == TEE_HANDLE_NULL ||
+	    sess->op_handle == TEE_HANDLE_NULL) {
+		EMSG("Operation not properly initialized.");
+		return TEE_ERROR_BAD_STATE;
+	}
 
 	/* Safely get the invocation parameters */
 	if (param_types != exp_param_types)
@@ -283,6 +289,11 @@ static TEE_Result reset_sha_iv(void *session, uint32_t param_types,
 	DMSG("Session %p: reset initial vector", session);
 	sess = session;
 
+	if (sess->op_handle == TEE_HANDLE_NULL) {
+		EMSG("Operation not properly initialized.");
+		return TEE_ERROR_BAD_STATE;
+	}
+
 	/* Safely get the invocation parameters */
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -316,6 +327,11 @@ static TEE_Result sha_update_op(void *session, uint32_t param_types,
 
 	DMSG("Session %p: sha update operation", session);
 	sess = session;
+
+	if (sess->op_handle == TEE_HANDLE_NULL) {
+		EMSG("Operation not properly initialized.");
+		return TEE_ERROR_BAD_STATE;
+	}
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -362,6 +378,11 @@ static TEE_Result compare_hmac_sha_algo(void *session, uint32_t param_types,
 
 	DMSG("Session %p: Compare HMAC SHA", session);
 	sess = session;
+
+	if (sess->op_handle == TEE_HANDLE_NULL) {
+		EMSG("Operation not properly initialized.");
+		return TEE_ERROR_BAD_STATE;
+	}
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -418,10 +439,8 @@ void TA_CloseSessionEntryPoint(void *session)
 	struct sha_hmac_algo *sess = session;
 
 	/* Release the session resources */
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeOperation(sess->op_handle);
 	TEE_Free(sess);
 }
 
@@ -437,11 +456,11 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session,
 		return set_sha_key(session, param_types, params);
 	case TA_SHA_CMD_SET_IV:
 		return reset_sha_iv(session, param_types, params);
-	case TA_CMD_SHA_INIT:
+	case TA_SHA_CMD_INIT:
 		return sha_update_op(session, param_types, params);
-	case TA_CMD_SHA_CMPR:
+	case TA_SHA_CMD_COMPARE_MAC:
 		return compare_hmac_sha_algo(session, param_types, params);
-	case CMD_COMPUTE_DIGEST:
+	case TA_SHA_CMD_COMPUTE_DIGEST:
 		return compute_digest(session, param_types, params);
 	default:
 		EMSG("Command ID 0x%"PRIx32" is not supported", cmd);
