@@ -48,7 +48,7 @@ static TEE_Result gen_ec_keypair(TEE_ObjectHandle *key, uint32_t curve)
 {
 	TEE_Result res = TEE_ERROR_GENERIC;
 	uint32_t bits = curve_bits(curve);
-	TEE_Attribute attrs[1];
+	TEE_Attribute attrs[1] = { };
 
 	if (!bits)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -86,7 +86,7 @@ static TEE_Result derive_secret(TEE_ObjectHandle my_key,
 	uint32_t bits = curve_bits(curve);
 	TEE_OperationHandle op = TEE_HANDLE_NULL;
 	TEE_ObjectHandle derived = TEE_HANDLE_NULL;
-	TEE_Attribute params[2];
+	TEE_Attribute params[2] = { };
 
 	if (!bits)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -119,49 +119,46 @@ static TEE_Result derive_secret(TEE_ObjectHandle my_key,
 					   secret, secret_len);
 
 out:
-	if (derived != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(derived);
-	if (op != TEE_HANDLE_NULL)
-		TEE_FreeOperation(op);
+	TEE_FreeTransientObject(derived);
+	TEE_FreeOperation(op);
 	return res;
 }
 
 static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 {
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 	const uint32_t exp_pt =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,  /* curve id in,secret len out */
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT); /* shared secret out */
 
-	if (param_types != exp_pt)
-		return TEE_ERROR_BAD_PARAMETERS;
-
 	uint32_t curve_ta = params[0].value.a;
 	uint32_t curve = select_curve(curve_ta);
 	uint32_t bits = curve_bits(curve);
-	uint8_t Ax[ECDH_BUF_BYTES] = {0};
-	uint8_t Ay[ECDH_BUF_BYTES] = {0};
-	uint8_t Bx[ECDH_BUF_BYTES] = {0};
-	uint8_t By[ECDH_BUF_BYTES] = {0};
-	uint32_t Ax_len = ECDH_BUF_BYTES;
-	uint32_t Ay_len = ECDH_BUF_BYTES;
-	uint32_t Bx_len = ECDH_BUF_BYTES;
-	uint32_t By_len = ECDH_BUF_BYTES;
-	uint8_t Sa[ECDH_BUF_BYTES] = {0};
-	uint8_t Sb[ECDH_BUF_BYTES] = {0};
-	uint32_t Sa_len = ECDH_BUF_BYTES;
-	uint32_t Sb_len = ECDH_BUF_BYTES;
+	uint8_t a_x[ECDH_BUF_BYTES] = {0};
+	uint8_t a_y[ECDH_BUF_BYTES] = {0};
+	uint8_t b_x[ECDH_BUF_BYTES] = {0};
+	uint8_t b_y[ECDH_BUF_BYTES] = {0};
+	uint32_t a_x_len = ECDH_BUF_BYTES;
+	uint32_t a_y_len = ECDH_BUF_BYTES;
+	uint32_t b_x_len = ECDH_BUF_BYTES;
+	uint32_t b_y_len = ECDH_BUF_BYTES;
+	uint8_t s_a[ECDH_BUF_BYTES] = {0};
+	uint8_t s_b[ECDH_BUF_BYTES] = {0};
+	uint32_t s_a_len = ECDH_BUF_BYTES;
+	uint32_t s_b_len = ECDH_BUF_BYTES;
+	TEE_ObjectHandle key_a = TEE_HANDLE_NULL;
+	TEE_ObjectHandle key_b = TEE_HANDLE_NULL;
 
-	DMSG("curve = %u", curve);
-	DMSG("bits = %u", bits);
+	if (param_types != exp_pt)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	DMSG("curve = %"PRIu32, curve);
+	DMSG("bits = %"PRIu32, bits);
 
 	if (!bits || curve == TEE_CRYPTO_ELEMENT_NONE)
 		return TEE_ERROR_BAD_PARAMETERS;
-
-	TEE_ObjectHandle key_a = TEE_HANDLE_NULL;
-	TEE_ObjectHandle key_b = TEE_HANDLE_NULL;
 
 	res = gen_ec_keypair(&key_a, curve);
 	CHECK(res, "gen key A");
@@ -169,42 +166,40 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 	res = gen_ec_keypair(&key_b, curve);
 	CHECK(res, "gen key B");
 
-	res = get_pub_xy(key_a, Ax, &Ax_len, Ay, &Ay_len);
+	res = get_pub_xy(key_a, a_x, &a_x_len, a_y, &a_y_len);
 	CHECK(res, "get A pub");
 
-	res = get_pub_xy(key_b, Bx, &Bx_len, By, &By_len);
+	res = get_pub_xy(key_b, b_x, &b_x_len, b_y, &b_y_len);
 	CHECK(res, "get B pub");
 
-	res = derive_secret(key_a, Bx, Bx_len, By, By_len, Sa, &Sa_len, curve);
+	res = derive_secret(key_a, b_x, b_x_len, b_y, b_y_len, s_a, &s_a_len, curve);
 	CHECK(res, "derive A");
 
-	res = derive_secret(key_b, Ax, Ax_len, Ay, Ay_len, Sb, &Sb_len, curve);
+	res = derive_secret(key_b, a_x, a_x_len, a_y, a_y_len, s_b, &s_b_len, curve);
 	CHECK(res, "derive B");
 
 	/* They must be identical in length and value */
-	if (Sa_len != Sb_len || TEE_MemCompare(Sa, Sb, Sa_len) != 0) {
+	if (s_a_len != s_b_len || TEE_MemCompare(s_a, s_b, s_a_len) != 0) {
 		res = TEE_ERROR_GENERIC;
 		goto out;
 	}
 
 	/* Copy to output */
-	if (params[3].memref.size < Sa_len) {
+	if (params[3].memref.size < s_a_len) {
 		/* Tell host needed size */
-		params[0].value.b = Sa_len;
+		params[0].value.b = s_a_len;
 		res = TEE_ERROR_SHORT_BUFFER;
 		goto out;
 	}
 
-	TEE_MemMove(params[3].memref.buffer, Sa, Sa_len);
-	params[0].value.b = Sa_len;
-	params[3].memref.size = Sa_len;
+	TEE_MemMove(params[3].memref.buffer, s_a, s_a_len);
+	params[0].value.b = s_a_len;
+	params[3].memref.size = s_a_len;
 	res = TEE_SUCCESS;
 
 out:
-	if (key_a != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(key_a);
-	if (key_b != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(key_b);
+	TEE_FreeTransientObject(key_a);
+	TEE_FreeTransientObject(key_b);
 	return res;
 }
 
@@ -230,11 +225,9 @@ void TA_CloseSessionEntryPoint(void *ctx __unused)
 {
 }
 
-TEE_Result TA_InvokeCommandEntryPoint(void *ctx, uint32_t cmd_id,
+TEE_Result TA_InvokeCommandEntryPoint(void *ctx __unused, uint32_t cmd_id,
 				      uint32_t param_types, TEE_Param params[4])
 {
-	(void)ctx;
-
 	switch (cmd_id) {
 	case TA_ECDH_CMD_DERIVE_SELFTEST:
 		return cmd_ecdh_selftest(param_types, params);
