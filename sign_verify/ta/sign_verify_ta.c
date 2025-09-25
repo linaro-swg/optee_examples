@@ -23,9 +23,15 @@ void TA_DestroyEntryPoint(void)
 {
 }
 
+static void free_rsa_keys(struct rsa_session *sess)
+{
+	TEE_FreeTransientObject(sess->public_key);
+	TEE_FreeTransientObject(sess->keypair);
+}
+
 static TEE_Result generate_rsa_keys(struct rsa_session *sess, size_t key_sz)
 {
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 
 	res = TEE_AllocateTransientObject(TEE_TYPE_RSA_KEYPAIR, key_sz,
 					  &sess->keypair);
@@ -33,26 +39,21 @@ static TEE_Result generate_rsa_keys(struct rsa_session *sess, size_t key_sz)
 		return res;
 
 	res = TEE_GenerateKey(sess->keypair, key_sz, NULL, 0);
-	if (res != TEE_SUCCESS) {
-		TEE_FreeTransientObject(sess->keypair);
-		return res;
-	}
+	if (res != TEE_SUCCESS)
+		goto out;
 
 	res = TEE_AllocateTransientObject(TEE_TYPE_RSA_PUBLIC_KEY, key_sz,
 					  &sess->public_key);
-	if (res != TEE_SUCCESS) {
-		TEE_FreeTransientObject(sess->keypair);
-		return res;
-	}
+	if (res != TEE_SUCCESS)
+		goto out;
 
 	res = TEE_CopyObjectAttributes1(sess->public_key, sess->keypair);
-	if (res != TEE_SUCCESS) {
-		TEE_FreeTransientObject(sess->public_key);
-		TEE_FreeTransientObject(sess->keypair);
-		return res;
-	}
 
-	return TEE_SUCCESS;
+out:
+	if (res != TEE_SUCCESS)
+		free_rsa_keys(sess);
+
+	return res;
 }
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
@@ -75,8 +76,6 @@ void TA_CloseSessionEntryPoint(void *session_context)
 {
 	struct rsa_session *sess = (struct rsa_session *)session_context;
 
-	TEE_FreeTransientObject(sess->public_key);
-	TEE_FreeTransientObject(sess->keypair);
 	TEE_Free(sess);
 }
 
@@ -152,17 +151,22 @@ static TEE_Result sign_verify(uint32_t param_types,
 						   TEE_PARAM_TYPE_MEMREF_OUTPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT);
-	TEE_Result res;
+	TEE_Result res = TEE_ERROR_GENERIC;
 	TEE_OperationHandle hash_op = TEE_HANDLE_NULL;
 	TEE_OperationHandle sign_op = TEE_HANDLE_NULL;
 	TEE_OperationHandle verify_op = TEE_HANDLE_NULL;
-	uint8_t digest[64];
+	uint8_t digest[64] = { };
 	uint32_t digest_len = sizeof(digest);
-	uint8_t sig[MAX_SIG_SIZE];
+	uint8_t sig[MAX_SIG_SIZE] = { };
 	uint32_t sig_len = sizeof(sig);
-	uint32_t sig_alg;
-	uint32_t algo_num;
-	uint32_t hash_alg;
+	uint32_t sig_alg = 0;
+	uint32_t algo_num= 0;
+	uint32_t hash_alg = 0;
+	size_t msg_len = 0;
+	size_t out_len = 0;
+	size_t key_sz = 0;
+	void *msg = NULL;
+	void *out = NULL;
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -176,19 +180,17 @@ static TEE_Result sign_verify(uint32_t param_types,
 	if (hash_alg == 0)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	void *msg = params[0].memref.buffer;
-	size_t msg_len = params[0].memref.size;
-	void *out = params[1].memref.buffer;
-	size_t out_len = params[1].memref.size;
-	size_t key_sz = params[3].value.a;
+	msg = params[0].memref.buffer;
+	msg_len = params[0].memref.size;
+	out = params[1].memref.buffer;
+	out_len = params[1].memref.size;
+	key_sz = params[3].value.a;
 
 	/* Generate Key */
 	DMSG("Generate Key");
 	res = generate_rsa_keys(sess, key_sz);
-	if (res != TEE_SUCCESS) {
-		TEE_Free(sess);
+	if (res != TEE_SUCCESS)
 		return res;
-	}
 
 	/* Compute SHA digest */
 	DMSG("Prepare SHA digest");
@@ -239,6 +241,7 @@ static TEE_Result sign_verify(uint32_t param_types,
 	params[1].memref.size = sig_len;
 
 exit:
+	free_rsa_keys(sess);
 	TEE_FreeOperation(verify_op);
 	TEE_FreeOperation(sign_op);
 	TEE_FreeOperation(hash_op);

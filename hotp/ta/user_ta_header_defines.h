@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2017, Linaro Limited
  * All rights reserved.
- *
- * SPDX-License-Identifier: BSD-2-Clause
  */
 
 /* The name of this file must not be modified */
@@ -14,7 +13,7 @@
 
 #define TA_UUID		TA_HOTP_UUID
 
-#define TA_FLAGS	TA_FLAG_EXEC_DDR
+#define TA_FLAGS	0
 
 /* Provisioned stack size */
 #define TA_STACK_SIZE	(2 * 1024)

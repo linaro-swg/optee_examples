@@ -107,8 +107,8 @@ static TEE_Result hmac_sha1(const uint8_t *key, const size_t keylen,
 	TEE_MACUpdate(op_handle, in, inlen);
 	res = TEE_MACComputeFinal(op_handle, NULL, 0, out, outlen);
 exit:
-	if (op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(op_handle);
+	/* It is OK to call this when op_handle is TEE_HANDLE_NULL */
+	TEE_FreeOperation(op_handle);
 
 	/* It is OK to call this when key_handle is TEE_HANDLE_NULL */
 	TEE_FreeTransientObject(key_handle);
@@ -131,8 +131,8 @@ static void truncate(uint8_t *hmac_result, uint32_t *bin_code)
 	*bin_code %= DBC2_MODULO;
 }
 
-static TEE_Result register_shared_key(struct hotp_key *state, 
-					uint32_t param_types, TEE_Param params[4])
+static TEE_Result register_shared_key(struct hotp_key *state,
+				      uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
 
@@ -158,14 +158,14 @@ static TEE_Result register_shared_key(struct hotp_key *state,
 	return res;
 }
 
-static TEE_Result get_hotp(struct hotp_key *state, 
-					uint32_t param_types, TEE_Param params[4])
+static TEE_Result get_hotp(struct hotp_key *state, uint32_t param_types,
+			   TEE_Param params[4])
 {
 	TEE_Result res = TEE_SUCCESS;
-	uint32_t hotp_val;
+	uint32_t hotp_val = 0;
 	uint8_t mac[SHA1_HASH_SIZE];
 	uint32_t mac_len = sizeof(mac);
-	int i;
+	int i = 0;
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_OUTPUT,
 						   TEE_PARAM_TYPE_NONE,
@@ -177,7 +177,7 @@ static TEE_Result get_hotp(struct hotp_key *state,
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	res = hmac_sha1(state->K, state->K_len, state->counter, 
+	res = hmac_sha1(state->K, state->K_len, state->counter,
 			sizeof(state->counter), mac, &mac_len);
 
 	/* Increment the counter. */
@@ -233,7 +233,6 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 void TA_CloseSessionEntryPoint(void *sess_ctx)
 {
 	TEE_Free(sess_ctx);
-	sess_ctx = NULL;
 }
 
 TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx,

@@ -1,28 +1,7 @@
+// SPDX-License-Identifier: BSD-2-Clause
 /*
  * Copyright (c) 2017, Linaro Limited
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <inttypes.h>
 
@@ -115,10 +94,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_VALUE_INPUT,
 				TEE_PARAM_TYPE_VALUE_INPUT,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	TEE_Attribute attr;
-	TEE_Result res;
-	char *key;
+	struct aes_cipher *sess = NULL;
+	TEE_Attribute attr = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *key = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: get ciphering resources", session);
@@ -148,8 +127,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	 */
 
 	/* Free potential previous operation */
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeOperation(sess->op_handle);
 
 	/* Allocate operation: AES/CTR, mode and size from params */
 	res = TEE_AllocateOperation(&sess->op_handle,
@@ -163,8 +141,7 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	}
 
 	/* Free potential previous transient object */
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeTransientObject(sess->key_handle);
 
 	/* Allocate transient object according to target key size */
 	res = TEE_AllocateTransientObject(TEE_TYPE_AES,
@@ -209,12 +186,10 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 	return res;
 
 err:
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	TEE_FreeOperation(sess->op_handle);
 	sess->op_handle = TEE_HANDLE_NULL;
 
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeTransientObject(sess->key_handle);
 	sess->key_handle = TEE_HANDLE_NULL;
 
 	return res;
@@ -224,18 +199,18 @@ err:
  * Process command TA_AES_CMD_SET_KEY. API in aes_ta.h
  */
 static TEE_Result set_aes_key(void *session, uint32_t param_types,
-				TEE_Param params[4])
+			      TEE_Param params[4])
 {
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	TEE_Attribute attr;
-	TEE_Result res;
-	uint32_t key_sz;
-	char *key;
+	struct aes_cipher *sess = NULL;
+	TEE_Attribute attr = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t key_sz = 0;
+	char *key = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: load key material", session);
@@ -294,16 +269,16 @@ static TEE_Result set_aes_key(void *session, uint32_t param_types,
  * Process command TA_AES_CMD_SET_IV. API in aes_ta.h
  */
 static TEE_Result reset_aes_iv(void *session, uint32_t param_types,
-				TEE_Param params[4])
+			       TEE_Param params[4])
 {
 	const uint32_t exp_param_types =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
-	size_t iv_sz;
-	char *iv;
+	struct aes_cipher *sess = NULL;
+	size_t iv_sz = 0;
+	char *iv = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: reset initial vector", session);
@@ -335,7 +310,7 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: cipher buffer", session);
@@ -374,10 +349,10 @@ void TA_DestroyEntryPoint(void)
 }
 
 TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
-					TEE_Param __unused params[4],
-					void __unused **session)
+				    TEE_Param __unused params[4],
+				    void __unused **session)
 {
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/*
 	 * Allocate and init ciphering materials for the session.
@@ -399,17 +374,15 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 
 void TA_CloseSessionEntryPoint(void *session)
 {
-	struct aes_cipher *sess;
+	struct aes_cipher *sess = NULL;
 
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: release session", session);
 	sess = (struct aes_cipher *)session;
 
-	/* Release the session resources */
-	if (sess->key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->key_handle);
-	if (sess->op_handle != TEE_HANDLE_NULL)
-		TEE_FreeOperation(sess->op_handle);
+	/* Release all remaining session resources */
+	TEE_FreeTransientObject(sess->key_handle);
+	TEE_FreeOperation(sess->op_handle);
 	TEE_Free(sess);
 }
 

@@ -1,28 +1,7 @@
+// SPDX-License-Identifier: BSD-2-Clause
 /*
  * Copyright (c) 2017, Linaro Limited
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <inttypes.h>
@@ -37,10 +16,10 @@ static TEE_Result delete_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_Result res;
-	char *obj_id;
-	size_t obj_id_sz;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
 
 	/*
 	 * Safely get the invocation parameters
@@ -82,13 +61,13 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_Result res;
-	char *obj_id;
-	size_t obj_id_sz;
-	char *data;
-	size_t data_sz;
-	uint32_t obj_data_flag;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
+	char *data = NULL;
+	size_t data_sz = 0;
+	uint32_t obj_data_flag = 0;
 
 	/*
 	 * Safely get the invocation parameters
@@ -149,14 +128,14 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
-	TEE_ObjectHandle object;
-	TEE_ObjectInfo object_info;
-	TEE_Result res;
-	uint32_t read_bytes;
-	char *obj_id;
-	size_t obj_id_sz;
-	char *data;
-	size_t data_sz;
+	TEE_ObjectHandle object = TEE_HANDLE_NULL;
+	TEE_ObjectInfo object_info = { };
+	TEE_Result res = TEE_ERROR_GENERIC;
+	uint32_t read_bytes = 0;
+	char *obj_id = NULL;
+	size_t obj_id_sz = 0;
+	char *data = NULL;
+	size_t data_sz = 0;
 
 	/*
 	 * Safely get the invocation parameters
