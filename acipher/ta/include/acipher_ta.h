@@ -22,4 +22,12 @@
  */
 #define TA_ACIPHER_CMD_ENCRYPT		1
 
+#define TA_ALG_PKCS1_V1_5		0
+#define TA_ALG_OAEP_MGF1_SHA1		1
+#define TA_ALG_OAEP_MGF1_SHA224		2
+#define TA_ALG_OAEP_MGF1_SHA256		3
+#define TA_ALG_OAEP_MGF1_SHA384		4
+#define TA_ALG_OAEP_MGF1_SHA512		5
+
+
 #endif /* __ACIPHER_TA_H */
