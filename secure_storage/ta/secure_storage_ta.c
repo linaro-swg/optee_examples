@@ -105,8 +105,10 @@ static TEE_Result create_raw_object(uint32_t param_types, TEE_Param params[4])
 
 	data_sz = params[1].memref.size;
 	data = TEE_Malloc(data_sz, 0);
-	if (!data)
+	if (!data) {
+		TEE_Free(obj_id);
 		return TEE_ERROR_OUT_OF_MEMORY;
+	}
 	TEE_MemMove(data, params[1].memref.buffer, data_sz);
 
 	/*
@@ -173,8 +175,10 @@ static TEE_Result read_raw_object(uint32_t param_types, TEE_Param params[4])
 
 	data_sz = params[1].memref.size;
 	data = TEE_Malloc(data_sz, 0);
-	if (!data)
+	if (!data) {
+		TEE_Free(obj_id);
 		return TEE_ERROR_OUT_OF_MEMORY;
+	}
 
 	/*
 	 * Check the object exist and can be dumped into output buffer
