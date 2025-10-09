@@ -12,7 +12,7 @@ clean: examples-clean prepare-for-rootfs-clean
 
 examples:
 	@for example in $(EXAMPLE_LIST); do \
-		$(MAKE) -C $$example CROSS_COMPILE="$(HOST_CROSS_COMPILE)" || exit 1; \
+		$(MAKE) -C $$example || exit 1; \
 	done
 
 examples-clean:
