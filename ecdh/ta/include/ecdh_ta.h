@@ -12,7 +12,6 @@
 	{ 0x50c82425, 0x94da, 0x4072, \
 		{ 0xa3, 0xe0, 0x58, 0xef, 0x06, 0x37, 0x67, 0xc0 } }
 
-#define TA_ECDH_CMD_DERIVE_SELFTEST		0
 /*
  * TA_ECDH_CMD_DERIVE_SELFTEST - Test EC keys generation and ECDH derivation
  *
@@ -24,6 +23,7 @@
  * size is provided output in param[3]memref.size)
  * Return another compliant TEE_Result error code in case of failure.
  */
+#define TA_ECDH_CMD_DERIVE_SELFTEST		0
 
 #define TA_ECDH_ECC_CURVE_NIST_P192		0
 #define TA_ECDH_ECC_CURVE_NIST_P224		1

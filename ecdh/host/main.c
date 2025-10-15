@@ -46,14 +46,12 @@ int main(void)
 		errx(1, "TEEC_OpenSession failed 0x%x origin 0x%x",
 		     res, err_origin);
 
-	memset(&op, 0, sizeof(op));
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT,
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
 					 TEEC_NONE,
 					 TEEC_NONE,
 					 TEEC_MEMREF_TEMP_OUTPUT);
 
 	op.params[0].value.a = curve;        /* IN: curve id */
-	op.params[0].value.b = 0;            /* OUT: secret len */
 	op.params[3].tmpref.buffer = secret; /* OUT buffer for secret */
 	op.params[3].tmpref.size = sizeof(secret);
 
@@ -63,7 +61,7 @@ int main(void)
 		errx(1, "Invoke TA_ECDH_CMD_DERIVE_SELFTEST failed 0x%x origin 0x%x",
 		     res, err_origin);
 
-	secret_len = op.params[0].value.b;
+	secret_len = op.params[3].tmpref.size;
 
 	printf("ECDH shared secret (%zu bytes) on curve id %u:\n",
 	       secret_len, curve);

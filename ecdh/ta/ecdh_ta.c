@@ -128,7 +128,7 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 {
 	TEE_Result res = TEE_ERROR_GENERIC;
 	const uint32_t exp_pt =
-		TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,  /* curve id in,secret len out */
+		TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,  /* curve id in */
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT); /* shared secret out */
@@ -187,13 +187,12 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 	/* Copy to output */
 	if (params[3].memref.size < s_a_len) {
 		/* Tell host needed size */
-		params[0].value.b = s_a_len;
+		params[3].memref.size = s_a_len;
 		res = TEE_ERROR_SHORT_BUFFER;
 		goto out;
 	}
 
 	TEE_MemMove(params[3].memref.buffer, s_a, s_a_len);
-	params[0].value.b = s_a_len;
 	params[3].memref.size = s_a_len;
 	res = TEE_SUCCESS;
 
