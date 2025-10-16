@@ -5,6 +5,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <tee_client_api.h>
 
@@ -15,6 +16,18 @@ struct ecdsa_ctx {
 	TEEC_Session sess;
 	uint32_t selected_algo;
 };
+
+static void usage(const char *pname)
+{
+	fprintf(stderr, "usage: %s [<algo>]\n\n", pname);
+	fprintf(stderr, "Example of ECSDSA authentication in a TA\n\n");
+	fprintf(stderr, "<algo>     ECDSA algorithm to use, supported values:\n");
+	fprintf(stderr, "           ECDSA_SHA1\n");
+	fprintf(stderr, "           ECDSA_SHA224\n");
+	fprintf(stderr, "           ECDSA_SHA256 (default)\n");
+	fprintf(stderr, "           ECDSA_SHA384\n");
+	fprintf(stderr, "           ECDSA_SHA512\n");
+}
 
 void prepare_tee_session(struct ecdsa_ctx *ctx)
 {
@@ -126,22 +139,23 @@ int main(int argc, char *argv[])
 	if (argc > 1) {
 		algo = argv[1];
 		printf("%s algo selected\n", algo);
-		if (strcmp(algo, "TA_ALG_ECDSA_SHA1") == 0) {
+		if (strcmp(algo, "ECDSA_SHA1") == 0) {
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA1;
-		} else if (strcmp(algo, "TA_ALG_ECDSA_SHA224") == 0) {
+		} else if (strcmp(algo, "ECDSA_SHA224") == 0) {
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA224;
-		} else if (strcmp(algo, "TA_ALG_ECDSA_SHA256") == 0) {
+		} else if (strcmp(algo, "ECDSA_SHA256") == 0) {
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA256;
-		} else if (strcmp(algo, "TA_ALG_ECDSA_SHA384") == 0) {
+		} else if (strcmp(algo, "ECDSA_SHA384") == 0) {
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA384;
-		} else if (strcmp(algo, "TA_ALG_ECDSA_SHA512") == 0) {
+		} else if (strcmp(algo, "ECDSA_SHA512") == 0) {
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA512;
 		} else {
 			printf("%s algo is invalid\n", algo);
-			return -1;
+			usage(argv[0]);
+			exit(1);
 		}
 	} else {
-		printf("TA_ALG_ECDSA_SHA256 algo selected\n");
+		printf("ECDSA_SHA256 algo selected\n");
 		ctx.selected_algo = TEE_ALG_ECDSA_SHA256;
 	}
 
