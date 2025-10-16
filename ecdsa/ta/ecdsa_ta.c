@@ -191,37 +191,46 @@ static TEE_Result genrate_key(void *session, uint32_t param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	if (sess->keypair != TEE_HANDLE_NULL)
+	if (sess->keypair != TEE_HANDLE_NULL) {
 		TEE_FreeTransientObject(sess->keypair);
-	if (sess->public_key != TEE_HANDLE_NULL)
+		sess->keypair = TEE_HANDLE_NULL;
+	}
+	if (sess->public_key != TEE_HANDLE_NULL) {
 		TEE_FreeTransientObject(sess->public_key);
+		sess->public_key = TEE_HANDLE_NULL;
+	}
 
 	res = TEE_AllocateTransientObject(TEE_TYPE_ECDSA_KEYPAIR, key_size,
 					  &sess->keypair);
 	if (res != TEE_SUCCESS)
-		return res;
+		goto out;
 
 	TEE_InitValueAttribute(&attr, TEE_ATTR_ECC_CURVE, curve, 0);
 
 	res = TEE_GenerateKey(sess->keypair, key_size, &attr, 1);
 	if (res != TEE_SUCCESS)
-		return res;
+		goto out;
 
 	res = TEE_AllocateTransientObject(TEE_TYPE_ECDSA_PUBLIC_KEY, key_size,
 					  &sess->public_key);
 	if (res != TEE_SUCCESS)
-		return res;
+		goto out;
 
 	res = TEE_CopyObjectAttributes1(sess->public_key, sess->keypair);
-	if (res != TEE_SUCCESS) {
-		TEE_FreeTransientObject(sess->public_key);
+
+out:
+	if (res == TEE_SUCCESS) {
+		DMSG("Key generated");
+		sess->key_sz = key_size;
+	} else {
 		TEE_FreeTransientObject(sess->keypair);
-		return res;
+		sess->keypair = TEE_HANDLE_NULL;
+
+		TEE_FreeTransientObject(sess->public_key);
+		sess->public_key = TEE_HANDLE_NULL;
 	}
 
-	DMSG("Key generated");
-	sess->key_sz = key_size;
-	return TEE_SUCCESS;
+	return res;
 }
 
 static TEE_Result sign_verify_digest(void *session, uint32_t param_types,
