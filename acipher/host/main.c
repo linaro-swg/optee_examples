@@ -18,12 +18,12 @@
 
 static void usage(int argc, char *argv[])
 {
-	const char *pname = "acipher";
+	const char *pname = argv[0];
 
-	if (argc)
-		pname = argv[0];
-
-	fprintf(stderr, "usage: %s <key_size> <string to encrypt>\n", pname);
+	fprintf(stderr, "usage: %s <key_size> <string to encrypt>\n\n", pname);
+	fprintf(stderr, "Example of RSAES PKCS#1 v1.5 asymmetric encryption in a TA\n\n");
+	fprintf(stderr, "<key_size>             Key size in bits\n");
+	fprintf(stderr, "<string to encrypt>    String to encrypt\n");
 	exit(1);
 }
 
