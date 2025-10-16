@@ -52,14 +52,15 @@ static void terminate_tee_session(struct test_ctx *ctx)
 
 static void usage(int argc, char *argv[])
 {
-	fprintf(stderr, "%s: optee_example_sha <string to process> <algo name>\n",
-		__func__);
-	fprintf(stderr, "<algo_name>: algorithm name. Supported values are:\n");
-	fprintf(stderr, "HMAC_SHA1, HMAC_SHA224, HMAC_SHA256, HMAC_SHA384, HMAC_SHA512\n");
-	fprintf(stderr, "AES_CMAC\n");
-	fprintf(stderr, "SHA1, SHA224, SHA256, SHA384, SHA512\n");
-	fprintf(stderr, "SHA3_224, SHA3_256, SHA3_384, SHA3_512\n");
-	fprintf(stderr, "SHAKE128, SHAKE256\n");
+	fprintf(stderr, "Usage: %s <string to process> [<algo>]\n\n", argv[0]);
+	fprintf(stderr, "Example of hash, HMAC and CMAC in a TA.\n\n");
+	fprintf(stderr, "<algo>    Optional algorithm name. HMAC_SHA256 if omitted.\n");
+	fprintf(stderr, "          Supported values are:\n");
+	fprintf(stderr, "          HMAC_SHA1, HMAC_SHA224, HMAC_SHA256, HMAC_SHA384, HMAC_SHA512\n");
+	fprintf(stderr, "          AES_CMAC\n");
+	fprintf(stderr, "          SHA1, SHA224, SHA256, SHA384, SHA512\n");
+	fprintf(stderr, "          SHA3_224, SHA3_256, SHA3_384, SHA3_512\n");
+	fprintf(stderr, "          SHAKE128, SHAKE256\n");
 	exit(1);
 }
 
@@ -213,7 +214,7 @@ int main(int argc, char *argv[])
 	TEEC_Result res = TEEC_ERROR_GENERIC;
 
 	if (argc < 2 || argc > 3) {
-		warnx("Unexpected number of arguments %d (expected 2)",
+		warnx("Unexpected number of arguments %d (expected 2)\n",
 		      argc - 1);
 		usage(argc, argv);
 	}
