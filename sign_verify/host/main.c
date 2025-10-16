@@ -15,22 +15,21 @@
 
 static void usage(int argc, char *argv[])
 {
-	printf("%s: optee_example_sign_verify <key_size> <algo_name>\n",
-	       __func__);
-	printf("<key_size>:  key size in bits. Supported values are: ");
-	printf("2048 bits (default), 3072 bits and 4096 bits\n");
-
-	printf("<algo_name>: algorithm name. Supported values are:\n");
-	printf("TA_ALG_PKCS1_V1_5_SHA1\n");
-	printf("TA_ALG_PKCS1_V1_5_SHA224\n");
-	printf("TA_ALG_PKCS1_V1_5_SHA256 (default)\n");
-	printf("TA_ALG_PKCS1_V1_5_SHA384\n");
-	printf("TA_ALG_PKCS1_V1_5_SHA512\n");
-	printf("TA_ALG_PKCS1_PSS_MGF1_SHA1\n");
-	printf("TA_ALG_PKCS1_PSS_MGF1_SHA224\n");
-	printf("TA_ALG_PKCS1_PSS_MGF1_SHA256\n");
-	printf("TA_ALG_PKCS1_PSS_MGF1_SHA384\n");
-	printf("TA_ALG_PKCS1_PSS_MGF1_SHA512\n");
+	fprintf(stderr, "Usage: %s [<key_size> [<algo_name>]]\n\n", argv[0]);
+	fprintf(stderr, "Example of RSA authentication in a TA\n\n");
+	fprintf(stderr, "<key_size>    Key size in bits, supported values are:\n");
+	fprintf(stderr, "              2048 (default), 3072, 4096.\n");
+	fprintf(stderr, "<algo_name>   Algorithm name, supported values are:\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_V1_5_SHA1\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_V1_5_SHA224\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_V1_5_SHA256 (default)\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_V1_5_SHA384\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_V1_5_SHA512\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_PSS_MGF1_SHA1\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_PSS_MGF1_SHA224\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_PSS_MGF1_SHA256\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_PSS_MGF1_SHA384\n");
+	fprintf(stderr, "              TA_ALG_PKCS1_PSS_MGF1_SHA512\n");
 
 	exit(1);
 }
@@ -48,13 +47,13 @@ static void get_args(int argc, char *argv[], size_t *key_size,
 	if (argc > 1) {
 		ks = strtol(argv[1], &ep, 0);
 		if (*ep) {
-			warnx("cannot parse key_size \"%s\"", argv[1]);
+			warnx("cannot parse key_size \"%s\"\n", argv[1]);
 			usage(argc, argv);
 		}
 	}
 
 	if (ks < 0 || ks == LONG_MAX) {
-		warnx("bad key_size \"%s\" (%ld)", argv[1], ks);
+		warnx("bad key_size \"%s\" (%ld)\n", argv[1], ks);
 		usage(argc, argv);
 	}
 
@@ -85,7 +84,7 @@ static void get_args(int argc, char *argv[], size_t *key_size,
 		} else if (strcmp(algo, "TA_ALG_PKCS1_PSS_MGF1_SHA512") == 0) {
 			*selected_alg = TA_ALG_PKCS1_PSS_MGF1_SHA512;
 		} else {
-			printf("%s algo is invalid\n", algo);
+			printf("%s algo is invalid\n\n", algo);
 			usage(argc, argv);
 		}
 	} else {
