@@ -51,12 +51,9 @@ void TA_CloseSessionEntryPoint(void *sess_ctx)
 {
 	struct ecdsa *sess = sess_ctx;
 
-	/* release session */
-	if (sess->keypair != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->keypair);
-	if (sess->public_key != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(sess->public_key);
-
+	/* release session resources */
+	TEE_FreeTransientObject(sess->keypair);
+	TEE_FreeTransientObject(sess->public_key);
 	TEE_Free(sess);
 }
 
@@ -191,14 +188,11 @@ static TEE_Result genrate_key(void *session, uint32_t param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
-	if (sess->keypair != TEE_HANDLE_NULL) {
-		TEE_FreeTransientObject(sess->keypair);
-		sess->keypair = TEE_HANDLE_NULL;
-	}
-	if (sess->public_key != TEE_HANDLE_NULL) {
-		TEE_FreeTransientObject(sess->public_key);
-		sess->public_key = TEE_HANDLE_NULL;
-	}
+	TEE_FreeTransientObject(sess->keypair);
+	sess->keypair = TEE_HANDLE_NULL;
+
+	TEE_FreeTransientObject(sess->public_key);
+	sess->public_key = TEE_HANDLE_NULL;
 
 	res = TEE_AllocateTransientObject(TEE_TYPE_ECDSA_KEYPAIR, key_size,
 					  &sess->keypair);
