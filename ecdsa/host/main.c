@@ -5,6 +5,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <tee_client_api.h>
 
@@ -15,6 +16,18 @@ struct ecdsa_ctx {
 	TEEC_Session sess;
 	uint32_t selected_algo;
 };
+
+static void usage(const char *pname)
+{
+	fprintf(stderr, "usage: %s [<algo>]\n\n", pname);
+	fprintf(stderr, "Example of ECSDSA authentication in a TA\n\n");
+	fprintf(stderr, "<algo>     ECDSA algorithm to use, supported values:\n");
+	fprintf(stderr, "           TA_ALG_ECDSA_SHA1\n");
+	fprintf(stderr, "           TA_ALG_ECDSA_SHA224\n");
+	fprintf(stderr, "           TA_ALG_ECDSA_SHA256 (default if <algo> ommited)\n");
+	fprintf(stderr, "           TA_ALG_ECDSA_SHA384\n");
+	fprintf(stderr, "           TA_ALG_ECDSA_SHA512\n");
+}
 
 void prepare_tee_session(struct ecdsa_ctx *ctx)
 {
@@ -138,7 +151,8 @@ int main(int argc, char *argv[])
 			ctx.selected_algo = TEE_ALG_ECDSA_SHA512;
 		} else {
 			printf("%s algo is invalid\n", algo);
-			return -1;
+			usage(argv[0]);
+			exit(1);
 		}
 	} else {
 		printf("TA_ALG_ECDSA_SHA256 algo selected\n");
