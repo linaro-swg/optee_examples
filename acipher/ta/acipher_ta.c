@@ -50,33 +50,6 @@ static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 	return TEE_SUCCESS;
 }
 
-static TEE_Result select_algo(uint32_t param, uint32_t *algo)
-{
-	switch (param) {
-	case TA_ALG_PKCS1_V1_5:
-		*algo = TEE_ALG_RSAES_PKCS1_V1_5;
-		return TEE_SUCCESS;
-	case TA_ALG_OAEP_MGF1_SHA1:
-		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA1;
-		return TEE_SUCCESS;
-	case TA_ALG_OAEP_MGF1_SHA224:
-		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA224;
-		return TEE_SUCCESS;
-	case TA_ALG_OAEP_MGF1_SHA256:
-		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA256;
-		return TEE_SUCCESS;
-	case TA_ALG_OAEP_MGF1_SHA384:
-		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA384;
-		return TEE_SUCCESS;
-	case TA_ALG_OAEP_MGF1_SHA512:
-		*algo = TEE_ALG_RSAES_PKCS1_OAEP_MGF1_SHA512;
-		return TEE_SUCCESS;
-	default:
-		EMSG("Invalid algo %u", param);
-		return TEE_ERROR_BAD_PARAMETERS;
-	}
-}
-
 static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 			  TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -109,10 +82,7 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	inbuf_len = params[0].memref.size;
 	outbuf = params[1].memref.buffer;
 	outbuf_len = params[1].memref.size;
-
-	res = select_algo(params[3].value.a, &alg_num);
-	if (res != TEE_SUCCESS)
-		return res;
+	alg_num = params[3].value.a;
 
 	if (params[2].value.a)
 		encrypt = TEE_MODE_ENCRYPT;
@@ -122,9 +92,15 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	res = TEE_AllocateOperation(&op, alg_num, encrypt,
 				    key_info.keySize);
 	if (res) {
-		EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#"
-		     PRIx32 ", %" PRId32 "): %#" PRIx32,
-		     alg_num, key_info.keySize, res);
+		if (encrypt == TEE_MODE_ENCRYPT) {
+			EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#"
+			     PRIx32 ", %" PRId32 "): %#" PRIx32,
+			     alg_num, key_info.keySize, res);
+		} else {
+			EMSG("TEE_AllocateOperation(TEE_MODE_DECRYPT, %#"
+			     PRIx32 ", %" PRId32 "): %#" PRIx32,
+			     alg_num, key_info.keySize, res);
+		}
 		return res;
 	}
 
@@ -205,7 +181,7 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session, uint32_t cmd,
 	switch (cmd) {
 	case TA_ACIPHER_CMD_GEN_KEY:
 		return cmd_gen_key(session, param_types, params);
-	case TA_ACIPHER_CMD_ENCRYPT:
+	case TA_ACIPHER_CMD_ENCRYPT_DECRYPT:
 		return cmd_enc(session, param_types, params);
 	default:
 		EMSG("Command ID %#" PRIx32 " is not supported", cmd);

@@ -26,17 +26,17 @@ static void usage(int argc, char *argv[])
 	if (argc)
 		pname = argv[0];
 
-	fprintf(stderr, "%s: %s <key_size> <string to encrypt> [<algo name>]\n",
-		__func__, pname);
-	printf("<key_size>:  key size in bits. Supported values are:\n");
-	printf("2048 bits, 3072 bits, 4096 bits\n");
-	printf("<algo_name>: algorithm name. Supported values are:\n");
-	printf("TA_ALG_PKCS1_V1_5 (default)\n");
-	printf("TA_ALG_OAEP_MGF1_SHA1\n");
-	printf("TA_ALG_OAEP_MGF1_SHA224\n");
-	printf("TA_ALG_OAEP_MGF1_SHA256\n");
-	printf("TA_ALG_OAEP_MGF1_SHA384\n");
-	printf("TA_ALG_OAEP_MGF1_SHA512\n");
+	fprintf(stderr, "Usage: %s <key_size> <string to encrypt> [<algo name>]\n\n",
+		pname);
+	fprintf(stderr, "<key_size>:  key size in bits. Supported values are:\n");
+	fprintf(stderr, "             2048, 3072, 4096\n");
+	fprintf(stderr, "<algo_name>: algorithm name. Supported values are:\n");
+	fprintf(stderr, "             TA_ALG_PKCS1_V1_5 (default)\n");
+	fprintf(stderr, "             TA_ALG_OAEP_MGF1_SHA1\n");
+	fprintf(stderr, "             TA_ALG_OAEP_MGF1_SHA224\n");
+	fprintf(stderr, "             TA_ALG_OAEP_MGF1_SHA256\n");
+	fprintf(stderr, "             TA_ALG_OAEP_MGF1_SHA384\n");
+	fprintf(stderr, "             TA_ALG_OAEP_MGF1_SHA512\n");
 	exit(1);
 }
 
@@ -47,9 +47,8 @@ static void get_args(int argc, char *argv[], size_t *key_size, void **inbuf,
 	long ks;
 	char *algo;
 
-	if ((argc > 4) || (argc < 3)) {
-		warnx("Unexpected number of arguments %d (expected 2)",
-		      argc - 1);
+	if (argc < 3 || argc > 4) {
+		warnx("Unexpected number of arguments %d", argc - 1);
 		usage(argc, argv);
 	}
 
@@ -83,7 +82,7 @@ static void get_args(int argc, char *argv[], size_t *key_size, void **inbuf,
 		} else if (strcmp(algo, "TA_ALG_PKCS1_V1_5") == 0) {
 			*algo_num = TA_ALG_PKCS1_V1_5;
 		} else {
-			printf("%s algo is invalid\n", algo);
+			fprintf(stderr, "%s algo is invalid\n", algo);
 			usage(argc, argv);
 		}
 	} else {
@@ -144,9 +143,9 @@ int main(int argc, char *argv[])
 	op.params[2].value.a = ENCRYPT; /* encrypt */
 	op.params[3].value.a = algo_num;
 
-	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT_DECRYPT, &op, &eo);
 	if (eo != TEEC_ORIGIN_TRUSTED_APP || res != TEEC_ERROR_SHORT_BUFFER)
-		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_ENCRYPT)");
+		teec_err(res, eo, "Command TA_ACIPHER_CMD_ENCRYPT_DECRYPT failed for encryption");
 
 	outbuf_len = op.params[1].tmpref.size;
 	op.params[1].tmpref.buffer = malloc(op.params[1].tmpref.size);
@@ -154,9 +153,9 @@ int main(int argc, char *argv[])
 		err(1, "Cannot allocate out buffer of size %zu",
 		    outbuf_len);
 
-	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT_DECRYPT, &op, &eo);
 	if (res)
-		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_ENCRYPT)");
+		teec_err(res, eo, "Command TA_ACIPHER_CMD_ENCRYPT_DECRYPT failed for encryption");
 
 	outbuf = malloc(outbuf_len);
 	if (!outbuf)
@@ -177,18 +176,18 @@ int main(int argc, char *argv[])
 	op.params[2].value.a = DECRYPT; /* decrypt */
 	op.params[3].value.a = algo_num;
 
-	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT_DECRYPT, &op, &eo);
 	if (eo != TEEC_ORIGIN_TRUSTED_APP || res != TEEC_ERROR_SHORT_BUFFER)
-		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_DYCRYPT)");
+		teec_err(res, eo, "Command TA_ACIPHER_CMD_ENCRYPT_DECRYPT failed for decryption");
 
 	op.params[1].tmpref.buffer = malloc(op.params[1].tmpref.size);
 	if (!op.params[1].tmpref.buffer)
 		err(1, "Cannot allocate out buffer of size %zu",
 		    outbuf_len);
 
-	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT, &op, &eo);
+	res = TEEC_InvokeCommand(&sess, TA_ACIPHER_CMD_ENCRYPT_DECRYPT, &op, &eo);
 	if (res)
-		teec_err(res, eo, "TEEC_InvokeCommand(TA_ACIPHER_CMD_DYCRYPT)");
+		teec_err(res, eo, "Command TA_ACIPHER_CMD_ENCRYPT_DECRYPT failed for decryption");
 
 	if (memcmp(inbuf, op.params[1].tmpref.buffer, op.params[1].tmpref.size))
 		printf("message is not matching\n");
