@@ -30,8 +30,4 @@
 #define TA_ECDH_ECC_CURVE_NIST_P256		2
 #define TA_ECDH_ECC_CURVE_NIST_P384		3
 
-#define ECDH_MAX_BITS   521
-#define ECDH_MAX_BYTES  ((ECDH_MAX_BITS + 7) / 8)
-#define ECDH_BUF_BYTES  (ECDH_MAX_BYTES + 14)
-
 #endif

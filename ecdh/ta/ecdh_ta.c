@@ -8,6 +8,10 @@
 
 #include <ecdh_ta.h>
 
+#define ECDH_MAX_BITS   521
+#define ECDH_MAX_BYTES  ((ECDH_MAX_BITS + 7) / 8)
+#define ECDH_BUF_BYTES  ECDH_MAX_BYTES
+
 #define CHECK(res, msg) \
 	do { if ((res) != TEE_SUCCESS) { EMSG(msg); TEE_Panic((res)); } } while (0)
 
@@ -154,9 +158,6 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 	if (param_types != exp_pt)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	DMSG("curve = %"PRIu32, curve);
-	DMSG("bits = %"PRIu32, bits);
-
 	if (!bits || curve == TEE_CRYPTO_ELEMENT_NONE)
 		return TEE_ERROR_BAD_PARAMETERS;
 
@@ -191,6 +192,9 @@ static TEE_Result cmd_ecdh_selftest(uint32_t param_types, TEE_Param params[4])
 		res = TEE_ERROR_SHORT_BUFFER;
 		goto out;
 	}
+
+	DMSG("curve = %"PRIu32, curve);
+	DMSG("bits = %"PRIu32, bits);
 
 	TEE_MemMove(params[3].memref.buffer, s_a, s_a_len);
 	params[3].memref.size = s_a_len;

@@ -34,7 +34,8 @@ int main(void)
 	uint32_t err_origin = 0;
 	size_t secret_len = 0;
 	uint32_t curve = TA_ECDH_ECC_CURVE_NIST_P384;
-	uint8_t secret[ECDH_BUF_BYTES];
+	uint8_t *secret = NULL;
+	size_t secret_buf_size = 0;
 
 	res = TEEC_InitializeContext(NULL, &ctx);
 	if (res != TEEC_SUCCESS)
@@ -52,11 +53,26 @@ int main(void)
 					 TEEC_MEMREF_TEMP_OUTPUT);
 
 	op.params[0].value.a = curve;        /* IN: curve id */
-	op.params[3].tmpref.buffer = secret; /* OUT buffer for secret */
-	op.params[3].tmpref.size = sizeof(secret);
+	op.params[3].tmpref.buffer = NULL; /* OUT buffer for secret */
+	op.params[3].tmpref.size = 0;
 
 	res = TEEC_InvokeCommand(&sess, TA_ECDH_CMD_DERIVE_SELFTEST,
 				 &op, &err_origin);
+
+	if (res == TEEC_ERROR_SHORT_BUFFER) {
+		secret_buf_size = op.params[3].tmpref.size;
+		secret = malloc(secret_buf_size);
+
+		if (!secret)
+			errx(1, "Failed to allocate memory");
+
+		op.params[3].tmpref.buffer = secret;
+		op.params[3].tmpref.size = secret_buf_size;
+
+		res = TEEC_InvokeCommand(&sess, TA_ECDH_CMD_DERIVE_SELFTEST,
+					 &op, &err_origin);
+	}
+
 	if (res != TEEC_SUCCESS)
 		errx(1, "Invoke TA_ECDH_CMD_DERIVE_SELFTEST failed 0x%x origin 0x%x",
 		     res, err_origin);
@@ -66,6 +82,7 @@ int main(void)
 	printf("ECDH shared secret (%zu bytes) on curve id %u:\n",
 	       secret_len, curve);
 	hexdump(secret, secret_len);
+	free(secret);
 
 	TEEC_CloseSession(&sess);
 	TEEC_FinalizeContext(&ctx);
