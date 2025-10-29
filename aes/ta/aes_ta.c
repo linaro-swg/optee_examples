@@ -327,7 +327,7 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	if (params[1].memref.size < params[0].memref.size) {
-		EMSG("Bad sizes: in %d, out %d", params[0].memref.size,
+		EMSG("Bad sizes: in %zu, out %zu", params[0].memref.size,
 						 params[1].memref.size);
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
@@ -347,8 +347,8 @@ static TEE_Result auth_enc_op(void *session, uint32_t param_types, TEE_Param par
 {
 	struct aes_cipher *sess = session;
 	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
-	uint32_t tag_len = 0;
-	uint32_t out_len = 0;
+	size_t tag_len = 0;
+	size_t out_len = 0;
 	void *in_buf = NULL;
 	size_t in_sz = 0;
 	bool encrypt = true;
