@@ -32,7 +32,8 @@ static TEE_Result cmd_gen_key(struct acipher *state, uint32_t pt,
 
 	res = TEE_AllocateTransientObject(key_type, key_size, &key);
 	if (res) {
-		EMSG("TEE_AllocateTransientObject(%#" PRIx32 ", %" PRId32 "): %#" PRIx32, key_type, key_size, res);
+		EMSG("TEE_AllocateTransientObject(%#" PRIx32 ", %" PRId32 "): %#"
+		     PRIx32, key_type, key_size, res);
 		return res;
 	}
 
@@ -57,13 +58,14 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	uint32_t inbuf_len = 0;
 	void *outbuf = NULL;
 	uint32_t outbuf_len = 0;
+	uint32_t alg_num = 0;
 	TEE_OperationHandle op = TEE_HANDLE_NULL;
 	TEE_ObjectInfo key_info = { };
-	const uint32_t alg = TEE_ALG_RSAES_PKCS1_V1_5;
+	uint32_t encrypt = 0;
 	const uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 						TEE_PARAM_TYPE_MEMREF_OUTPUT,
-						TEE_PARAM_TYPE_NONE,
-						TEE_PARAM_TYPE_NONE);
+						TEE_PARAM_TYPE_VALUE_INPUT,
+						TEE_PARAM_TYPE_VALUE_INPUT);
 
 	if (pt != exp_pt)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -80,11 +82,25 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 	inbuf_len = params[0].memref.size;
 	outbuf = params[1].memref.buffer;
 	outbuf_len = params[1].memref.size;
+	alg_num = params[3].value.a;
 
-	res = TEE_AllocateOperation(&op, alg, TEE_MODE_ENCRYPT,
+	if (params[2].value.a)
+		encrypt = TEE_MODE_ENCRYPT;
+	else
+		encrypt = TEE_MODE_DECRYPT;
+
+	res = TEE_AllocateOperation(&op, alg_num, encrypt,
 				    key_info.keySize);
 	if (res) {
-		EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#" PRIx32 ", %" PRId32 "): %#" PRIx32, alg, key_info.keySize, res);
+		if (encrypt == TEE_MODE_ENCRYPT) {
+			EMSG("TEE_AllocateOperation(TEE_MODE_ENCRYPT, %#"
+			     PRIx32 ", %" PRId32 "): %#" PRIx32,
+			     alg_num, key_info.keySize, res);
+		} else {
+			EMSG("TEE_AllocateOperation(TEE_MODE_DECRYPT, %#"
+			     PRIx32 ", %" PRId32 "): %#" PRIx32,
+			     alg_num, key_info.keySize, res);
+		}
 		return res;
 	}
 
@@ -94,10 +110,22 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 		goto out;
 	}
 
-	res = TEE_AsymmetricEncrypt(op, NULL, 0, inbuf, inbuf_len, outbuf,
-				    &outbuf_len);
-	if (res) {
-		EMSG("TEE_AsymmetricEncrypt(%" PRId32 ", %" PRId32 "): %#" PRIx32, inbuf_len, params[1].memref.size, res);
+	if (encrypt == TEE_MODE_ENCRYPT) {
+		res = TEE_AsymmetricEncrypt(op, NULL, 0, inbuf,
+					    inbuf_len, outbuf, &outbuf_len);
+		if (res) {
+			EMSG("TEE_AsymmetricEncrypt(%" PRId32 ", %"
+			     PRId32 "): %#" PRIx32, inbuf_len,
+			     params[1].memref.size, res);
+		}
+	} else {
+		res = TEE_AsymmetricDecrypt(op, NULL, 0, inbuf, inbuf_len,
+					    outbuf, &outbuf_len);
+		if (res) {
+			EMSG("TEE_AsymmetricDecrypt(%" PRId32 ", %"
+			     PRId32 "): %#" PRIx32, inbuf_len,
+			     params[1].memref.size, res);
+		}
 	}
 	params[1].memref.size = outbuf_len;
 
@@ -153,7 +181,7 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session, uint32_t cmd,
 	switch (cmd) {
 	case TA_ACIPHER_CMD_GEN_KEY:
 		return cmd_gen_key(session, param_types, params);
-	case TA_ACIPHER_CMD_ENCRYPT:
+	case TA_ACIPHER_CMD_ENCRYPT_DECRYPT:
 		return cmd_enc(session, param_types, params);
 	default:
 		EMSG("Command ID %#" PRIx32 " is not supported", cmd);
