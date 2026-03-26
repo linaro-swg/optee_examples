@@ -28,6 +28,8 @@ struct aes_cipher {
 	uint32_t key_size;		/* AES key size in byte */
 	TEE_OperationHandle op_handle;	/* AES ciphering operation */
 	TEE_ObjectHandle key_handle;	/* transient object to load the key */
+	uint8_t nonce[16];		/* Stored nonce/IV for AE modes */
+	size_t nonce_len;		/* Nonce length */
 };
 
 /*
@@ -134,6 +136,14 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 
 	/* Free potential previous operation */
 	TEE_FreeOperation(sess->op_handle);
+	sess->op_handle = TEE_HANDLE_NULL;
+
+	/* Free potential previous transient object */
+	TEE_FreeTransientObject(sess->key_handle);
+	sess->key_handle = TEE_HANDLE_NULL;
+
+	/* Reset nonce state from previous operation */
+	sess->nonce_len = 0;
 
 	/* Allocate operation: AES/CTR, mode and size from params */
 	res = TEE_AllocateOperation(&sess->op_handle,
@@ -145,9 +155,6 @@ static TEE_Result alloc_resources(void *session, uint32_t param_types,
 		sess->op_handle = TEE_HANDLE_NULL;
 		goto err;
 	}
-
-	/* Free potential previous transient object */
-	TEE_FreeTransientObject(sess->key_handle);
 
 	/* Allocate transient object according to target key size */
 	res = TEE_AllocateTransientObject(TEE_TYPE_AES,
@@ -298,9 +305,23 @@ static TEE_Result reset_aes_iv(void *session, uint32_t param_types,
 	iv_sz = params[0].memref.size;
 
 	/*
-	 * Init cipher operation with the initialization vector.
+	 * For CCM/GCM modes, store the nonce for later use in auth_enc_op.
+	 * For traditional modes, initialize cipher operation with IV.
 	 */
-	TEE_CipherInit(sess->op_handle, iv, iv_sz);
+	if (sess->algo == TEE_ALG_AES_CCM || sess->algo == TEE_ALG_AES_GCM) {
+		/* Store nonce for authenticated encryption modes */
+		if (iv_sz > sizeof(sess->nonce)) {
+			EMSG("Nonce size %zu too large (max %zu)", iv_sz,
+			     sizeof(sess->nonce));
+			return TEE_ERROR_BAD_PARAMETERS;
+		}
+		TEE_MemMove(sess->nonce, iv, iv_sz);
+		sess->nonce_len = iv_sz;
+		DMSG("Stored nonce for AE mode (%zu bytes)", iv_sz);
+	} else {
+		/* Traditional modes: initialize cipher operation with IV */
+		TEE_CipherInit(sess->op_handle, iv, iv_sz);
+	}
 
 	return TEE_SUCCESS;
 }
@@ -346,18 +367,14 @@ static TEE_Result cipher_buffer(void *session, uint32_t param_types,
 static TEE_Result auth_enc_op(void *session, uint32_t param_types, TEE_Param params[4])
 {
 	struct aes_cipher *sess = session;
-	TEE_Result res = TEE_ERROR_OUT_OF_MEMORY;
+	TEE_Result res = TEE_ERROR_GENERIC;
 	size_t tag_len = 0;
 	size_t out_len = 0;
 	void *in_buf = NULL;
 	size_t in_sz = 0;
 	bool encrypt = true;
-	void *b2 = NULL;
-	void *b3 = NULL;
-	uint8_t nonce[12] = {
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0A, 0x0B
-	};
+	uint8_t *nonce = NULL;
+	size_t nonce_len = 0;
 	const uint32_t expected_pt =
 		TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 				TEE_PARAM_TYPE_MEMREF_OUTPUT,
@@ -373,72 +390,54 @@ static TEE_Result auth_enc_op(void *session, uint32_t param_types, TEE_Param par
 	in_sz = params[0].memref.size;
 	encrypt = (params[2].value.a != 0);
 
-	if (params[1].memref.buffer && params[1].memref.size) {
-		b2 = TEE_Malloc(params[1].memref.size, 0);
-		if (!b2)
-			goto out;
+	/* Use stored nonce if available, otherwise use default */
+	if (sess->nonce_len > 0) {
+		nonce = sess->nonce;
+		nonce_len = sess->nonce_len;
+		DMSG("Using stored nonce (%zu bytes)", nonce_len);
+	} else {
+		/* Default nonce for backward compatibility */
+		static uint8_t default_nonce[12] = {
+			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+			0x08, 0x09, 0x0A, 0x0B
+		};
+
+		nonce = default_nonce;
+		nonce_len = sizeof(default_nonce);
+		DMSG("Using default nonce (%zu bytes)", nonce_len);
 	}
 
 	DMSG("Initializing an Authentication Encryption operation");
 
-	res = TEE_AEInit(sess->op_handle, nonce, sizeof(nonce),
+	res = TEE_AEInit(sess->op_handle, nonce, nonce_len,
 			 tag_len * 8, 0, in_sz);
-
 	if (res != TEE_SUCCESS)
-		goto out;
+		return res;
 
 	if (encrypt) {
-		if (params[3].memref.buffer && params[3].memref.size) {
-			b3 = TEE_Malloc(params[3].memref.size, 0);
-			if (!b3) {
-				res = TEE_ERROR_OUT_OF_MEMORY;
-				goto out;
-			}
-		}
 		DMSG("AE Encryption");
 		res = TEE_AEEncryptFinal(sess->op_handle,
 					 in_buf, in_sz,
-					 b2, &out_len,
-					 b3, &tag_len);
-
+					 params[1].memref.buffer, &out_len,
+					 params[3].memref.buffer, &tag_len);
 		if (res == TEE_SUCCESS) {
-			if (b2) {
-				TEE_MemMove(params[1].memref.buffer, b2,
-					    out_len);
-			}
-			if (b3) {
-				TEE_MemMove(params[3].memref.buffer, b3,
-					    tag_len);
-			}
-
 			params[1].memref.size = out_len;
 			params[3].memref.size = tag_len;
 		} else {
 			EMSG("TEE_AEEncryptFinal failed with %#"PRIx32, res);
 		}
 	} else {
-
 		DMSG("AE Decryption");
 		res = TEE_AEDecryptFinal(sess->op_handle,
 					 in_buf, in_sz,
-					 b2, &out_len,
-					 params[3].memref.buffer,
-					 tag_len);
+					 params[1].memref.buffer, &out_len,
+					 params[3].memref.buffer, tag_len);
 		if (res == TEE_SUCCESS) {
-
-			if (b2) {
-				TEE_MemMove(params[1].memref.buffer, b2,
-					    out_len);
-			}
-
 			params[1].memref.size = out_len;
 		} else {
 			EMSG("TEE_AEDecryptFinal failed with %#"PRIx32, res);
 		}
 	}
-out:
-	TEE_Free(b2);
-	TEE_Free(b3);
 
 	return res;
 }
@@ -471,6 +470,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 
 	sess->key_handle = TEE_HANDLE_NULL;
 	sess->op_handle = TEE_HANDLE_NULL;
+	sess->nonce_len = 0;  /* Initialize nonce fields */
 
 	*session = (void *)sess;
 	DMSG("Session %p: newly allocated", *session);
