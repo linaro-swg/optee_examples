@@ -35,6 +35,10 @@
 #define TEE_ALG_HMAC_SHA256             0x30000004
 #define TEE_ALG_HMAC_SHA384             0x30000005
 #define TEE_ALG_HMAC_SHA512             0x30000006
+#define TEE_ALG_HMAC_SHA3_224           0x30000008
+#define TEE_ALG_HMAC_SHA3_256           0x30000009
+#define TEE_ALG_HMAC_SHA3_384           0x3000000A
+#define TEE_ALG_HMAC_SHA3_512           0x3000000B
 #define TEE_ALG_SHAKE128                0x50000101
 #define TEE_ALG_SHAKE256                0x50000102
 #define TEE_ALG_AES_CMAC                0x30000610
@@ -47,6 +51,10 @@ enum ta_sha_object_type {
 	TA_SHA_OBJ_TYPE_HMAC_SHA384 = 3,
 	TA_SHA_OBJ_TYPE_HMAC_SHA512 = 4,
 	TA_SHA_OBJ_TYPE_AES = 5,
+	TA_SHA_OBJ_TYPE_HMAC_SHA3_224 = 6,
+	TA_SHA_OBJ_TYPE_HMAC_SHA3_256 = 7,
+	TA_SHA_OBJ_TYPE_HMAC_SHA3_384 = 8,
+	TA_SHA_OBJ_TYPE_HMAC_SHA3_512 = 9,
 };
 
 /*
