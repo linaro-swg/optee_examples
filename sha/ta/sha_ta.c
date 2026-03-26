@@ -38,6 +38,18 @@ static TEE_Result ta2tee_obj_type(uint32_t param, uint32_t *tee_obj_type)
 	case TA_SHA_OBJ_TYPE_HMAC_SHA512:
 		*tee_obj_type = TEE_TYPE_HMAC_SHA512;
 		return TEE_SUCCESS;
+	case TA_SHA_OBJ_TYPE_HMAC_SHA3_224:
+		*tee_obj_type = TEE_TYPE_HMAC_SHA3_224;
+		return TEE_SUCCESS;
+	case TA_SHA_OBJ_TYPE_HMAC_SHA3_256:
+		*tee_obj_type = TEE_TYPE_HMAC_SHA3_256;
+		return TEE_SUCCESS;
+	case TA_SHA_OBJ_TYPE_HMAC_SHA3_384:
+		*tee_obj_type = TEE_TYPE_HMAC_SHA3_384;
+		return TEE_SUCCESS;
+	case TA_SHA_OBJ_TYPE_HMAC_SHA3_512:
+		*tee_obj_type = TEE_TYPE_HMAC_SHA3_512;
+		return TEE_SUCCESS;
 	case TA_SHA_OBJ_TYPE_AES:
 		*tee_obj_type = TEE_TYPE_AES;
 		return TEE_SUCCESS;
