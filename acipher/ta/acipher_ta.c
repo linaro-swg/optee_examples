@@ -119,12 +119,46 @@ static TEE_Result cmd_enc(struct acipher *state, uint32_t pt,
 			     params[1].memref.size, res);
 		}
 	} else {
-		res = TEE_AsymmetricDecrypt(op, NULL, 0, inbuf, inbuf_len,
-					    outbuf, &outbuf_len);
-		if (res) {
-			EMSG("TEE_AsymmetricDecrypt(%" PRId32 ", %"
-			     PRId32 "): %#" PRIx32, inbuf_len,
-			     params[1].memref.size, res);
+		if (!outbuf) {
+			/*
+			 * Size-probe call: the host passes a NULL output buffer
+			 * to query the required plaintext length.
+			 * TEE_AsymmetricDecrypt() rejects a NULL destination
+			 * pointer with TEE_ERROR_BAD_PARAMETERS before it can
+			 * compute the output size.  Allocate a temporary
+			 * internal buffer sized to the maximum RSA output
+			 * (key modulus bytes), run the full decryption into it
+			 * to obtain the exact plaintext length, then free it
+			 * and return TEE_ERROR_SHORT_BUFFER so the host can
+			 * re-invoke with a correctly-sized output buffer.
+			 */
+			uint8_t *tmp_buf = NULL;
+
+			outbuf_len = key_info.keySize / 8;
+			tmp_buf = TEE_Malloc(outbuf_len, 0);
+			if (!tmp_buf) {
+				res = TEE_ERROR_OUT_OF_MEMORY;
+				goto out;
+			}
+			res = TEE_AsymmetricDecrypt(op, NULL, 0, inbuf,
+						    inbuf_len, tmp_buf,
+						    &outbuf_len);
+			TEE_Free(tmp_buf);
+			if (res != TEE_SUCCESS) {
+				EMSG("TEE_AsymmetricDecrypt size probe failed: %#"
+				     PRIx32, res);
+				goto out;
+			}
+			res = TEE_ERROR_SHORT_BUFFER;
+		} else {
+			res = TEE_AsymmetricDecrypt(op, NULL, 0, inbuf,
+						    inbuf_len, outbuf,
+						    &outbuf_len);
+			if (res) {
+				EMSG("TEE_AsymmetricDecrypt(%" PRId32 ", %"
+				     PRId32 "): %#" PRIx32, inbuf_len,
+				     params[1].memref.size, res);
+			}
 		}
 	}
 	params[1].memref.size = outbuf_len;
