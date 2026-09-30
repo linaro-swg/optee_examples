@@ -362,8 +362,6 @@ static TEE_Result sha_update_op(void *session, uint32_t param_types,
 			goto out;
 	}
 
-	TEE_MACUpdate(sess->op_handle, message, message_sz);
-
 	res = TEE_MACComputeFinal(sess->op_handle, message, message_sz,
 				  b2, &hmac_len);
 
@@ -407,8 +405,6 @@ static TEE_Result compare_hmac_sha_algo(void *session, uint32_t param_types,
 	message_sz = params[0].memref.size;
 	hmac_buff = params[1].memref.buffer;
 	hmac_len = (uint32_t)params[1].memref.size;
-
-	TEE_MACUpdate(sess->op_handle, message, message_sz);
 
 	return TEE_MACCompareFinal(sess->op_handle, message, message_sz,
 				   hmac_buff, hmac_len);
